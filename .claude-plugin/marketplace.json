@@ -1,0 +1,8 @@
+{
+  "name": "context-health",
+  "owner": { "name": "Mark Rogers" },
+  "metadata": { "description": "Cross-agent context health: a hook, status line and skill that warn when a session's context is big enough to degrade the model" },
+  "plugins": [
+    { "name": "context-health", "source": "./", "description": "Warns when the session or startup context is large enough to degrade the running model, in Claude Code, Copilot CLI, VS Code, Codex CLI, Gemini CLI and Cursor; research-derived per-model bands that refresh themselves" }
+  ]
+}

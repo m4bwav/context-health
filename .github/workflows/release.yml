@@ -1,0 +1,32 @@
+# Official releases. Push a tag `vX.Y.Z` (matching .claude-plugin/plugin.json) and this job runs the
+# tests, packs the plugin with its own `pack` command and publishes the zip as a GitHub release.
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: version in plugin.json must match the tag
+        run: |
+          v=$(python -c "import json;print(json.load(open('.claude-plugin/plugin.json'))['version'])")
+          test "v$v" = "${GITHUB_REF_NAME}" || { echo "plugin.json says $v, tag is ${GITHUB_REF_NAME}"; exit 1; }
+      - name: test suite
+        run: python tests/test_ctxhealth.py
+      - name: pack the plugin
+        run: python skills/context-health/ctxhealth.py pack --out dist
+      - name: publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/*.zip \
+            --title "context-health ${GITHUB_REF_NAME#v}" \
+            --generate-notes \
+            --notes "Install: unzip somewhere permanent (or clone the repository), then run python context-health/skills/context-health/ctxhealth.py install --agent all and restart your agents; python .../ctxhealth.py doctor verifies. Reasoned changes: skills/context-health/CHANGELOG.md."

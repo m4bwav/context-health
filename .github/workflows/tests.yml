@@ -1,0 +1,27 @@
+# Runs the tool's test suite on the three operating systems it promises, so a change that only works
+# on the author's machine cannot land unnoticed.
+name: tests
+on:
+  push:
+    branches: [master]
+  pull_request:
+jobs:
+  suite:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ["3.9", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: test suite
+        run: python tests/test_ctxhealth.py
+      - name: the tool answers from a clean checkout
+        run: |
+          python skills/context-health/ctxhealth.py version
+          python skills/context-health/ctxhealth.py models --model claude-opus-5
+          python skills/context-health/ctxhealth.py install --agent claude --dry-run

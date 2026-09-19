@@ -1,0 +1,438 @@
+{
+  "version": "1.3.0",
+  "last_checked": "2026-09-17",
+  "_about": "Per-model context windows and degradation bands used by ctxhealth.py. Bands are research-derived ESTIMATES of a gradual gradient, not cliffs (Chroma Context Rot 2025; Anthropic 'gradient not cliff' guidance). Evidence and search plan: RESEARCH.md. Edit families/match to add a model; never hand-edit thresholds without logging a C- entry in CHANGELOG.md.",
+  "profiles": {
+    "_about": "Fractions of the model's NATIVE window at which each band starts: [watch, caution, warning, critical]. Keyed by model class. 'balanced' is the default; 'conservative' reproduces the original 2026-08-29 absolute bands for 1M models (100K/200K/400K/600K); 'relaxed' follows the later evidence (Verdent: onset ~400K, unreliable past ~600K on Sonnet 4.6; Opus 4.6 MRCR 93% at 256K -> 76% at 1M).",
+    "balanced": {
+      "1m": [
+        0.2,
+        0.4,
+        0.6,
+        0.8
+      ],
+      "400k": [
+        0.2,
+        0.4,
+        0.6,
+        0.8
+      ],
+      "200k": [
+        0.2,
+        0.4,
+        0.6,
+        0.8
+      ]
+    },
+    "conservative": {
+      "1m": [
+        0.1,
+        0.2,
+        0.4,
+        0.6
+      ],
+      "400k": [
+        0.15,
+        0.3,
+        0.5,
+        0.7
+      ],
+      "200k": [
+        0.3,
+        0.5,
+        0.7,
+        0.8
+      ]
+    },
+    "relaxed": {
+      "1m": [
+        0.4,
+        0.6,
+        0.75,
+        0.9
+      ],
+      "400k": [
+        0.35,
+        0.55,
+        0.7,
+        0.85
+      ],
+      "200k": [
+        0.3,
+        0.5,
+        0.65,
+        0.8
+      ]
+    }
+  },
+  "band_text": {
+    "green": {
+      "label": "GREEN",
+      "effects": "no measurable effect for most tasks",
+      "advice": "continue"
+    },
+    "watch": {
+      "label": "WATCH",
+      "effects": "mild; recall of mid-session details starts to soften",
+      "advice": "fine to continue; start the next big task in a fresh session"
+    },
+    "caution": {
+      "label": "CAUTION",
+      "effects": "noticeable; weaker mid-session recall, instruction drift, more lost-in-the-middle misses",
+      "advice": "finish the current piece of work here, then start a new session; offer a handoff summary (decisions, open items, file paths)"
+    },
+    "warning": {
+      "label": "WARNING",
+      "effects": "significant; retrieval of specific earlier facts is unreliable",
+      "advice": "start a new session now unless mid-critical-step; write a handoff summary file first"
+    },
+    "critical": {
+      "label": "CRITICAL",
+      "effects": "severe; retrieval unreliable and auto-compaction is near, which silently summarizes history",
+      "advice": "write the handoff summary now, then start a new session"
+    }
+  },
+  "unknown_model": {
+    "id": "unknown",
+    "label": "unrecognized model (assumed 200K)",
+    "window": 200000,
+    "class": "200k",
+    "note": "Add the id to a family in models.json; the refresh procedure in MAINTENANCE.md covers new models."
+  },
+  "families": [
+    {
+      "id": "claude-1m",
+      "label": "Claude 1M-class",
+      "window": 1000000,
+      "max_output": 128000,
+      "class": "1m",
+      "checked": "2026-09-02",
+      "match": [
+        "claude-fable-5*",
+        "fable-5*",
+        "fable",
+        "claude-mythos-5*",
+        "mythos*",
+        "claude-opus-5*",
+        "opus-5*",
+        "opus",
+        "claude-sonnet-5*",
+        "sonnet-5*",
+        "sonnet",
+        "claude-opus-4-6*",
+        "claude-opus-4-7*",
+        "claude-opus-4-8*",
+        "opus-4-6*",
+        "opus-4-7*",
+        "opus-4-8*",
+        "opus-4.6*",
+        "opus-4.7*",
+        "opus-4.8*",
+        "claude-sonnet-4-6*",
+        "sonnet-4-6*",
+        "sonnet-4.6*",
+        "claude-mythos-preview*"
+      ],
+      "note": "Fable 5.1 / Mythos 5.1 / Opus 5 / Sonnet 5 / Opus 4.6-4.8 / Sonnet 4.6: 1M input, 128K output (platform.claude.com context-windows doc, 2026-09-02). No independent long-context benchmark published for the 5.x models yet; bands come from Opus 4.6 MRCR (93% at 256K, 76% at 1M) and Sonnet 4.6 field reports (onset ~400K, unreliable past ~600K). Claude Code: auto-compact at roughly window minus ~33K (Sonnet 5 documented ~967K); CLAUDE_CODE_DISABLE_1M_CONTEXT=1 caps at 200K."
+    },
+    {
+      "id": "claude-200k",
+      "label": "Claude 200K-class",
+      "window": 200000,
+      "max_output": 64000,
+      "class": "200k",
+      "checked": "2026-09-02",
+      "match": [
+        "claude-haiku-4-5*",
+        "haiku*",
+        "claude-sonnet-4-5*",
+        "sonnet-4-5*",
+        "sonnet-4.5*",
+        "claude-opus-4-5*",
+        "opus-4-5*",
+        "opus-4.5*",
+        "claude-opus-4-1*",
+        "opus-4-1*",
+        "claude-opus-4",
+        "claude-sonnet-4",
+        "claude-3*",
+        "claude-*"
+      ],
+      "note": "Haiku 4.5, Sonnet 4.5, Opus 4.5 and older: 200K. The trailing claude-* pattern catches unknown Claude ids conservatively; newer Claude models are 1M, so add them to claude-1m when they appear."
+    },
+    {
+      "id": "gpt-6-astra",
+      "label": "GPT-6 Astra (1M)",
+      "window": 1000000,
+      "max_output": 128000,
+      "class": "1m",
+      "checked": "2026-09-17",
+      "match": [
+        "gpt-6-astra*",
+        "gpt-6*",
+        "astra*"
+      ],
+      "note": "Released 2026-09-03/04; 1M-token window (OpenAI). MRCR v2 8-needle: 100% at 256K-512K, 96.3% at 512K-1M, the strongest long-context score published so far. Default model in Codex CLI since v0.153.1; Codex users configure a 600K window for it (openai/codex#45074: effective 95%, auto-compact 90%, and the internal count can exceed the displayed one by 200K+, so treat Codex numbers on Astra as rough). Secondary sources give 922K input / 128K output and recommend auto_compact_token_limit 850000."
+    },
+    {
+      "id": "gpt-5.6",
+      "label": "GPT-5.6 Sol / Terra / Luna (272K)",
+      "window": 272000,
+      "max_output": 128000,
+      "class": "200k",
+      "checked": "2026-09-17",
+      "match": [
+        "gpt-5.6*",
+        "gpt-5-6*"
+      ],
+      "note": "Codex changelog corrected the GPT-5.6 windows to 272,000 (via secondary report); Cursor lists GPT-5.6 at 272K. MRCR v2 8-needle: Sol 91.5% at 256K-512K, 73.8% at 512K-1M (OpenAI, quoted against Astra). Verify against a primary OpenAI page on the next refresh."
+    },
+    {
+      "id": "gpt-5.5",
+      "label": "GPT-5.5 (1M native)",
+      "window": 1050000,
+      "max_output": 128000,
+      "class": "1m",
+      "checked": "2026-09-02",
+      "match": [
+        "gpt-5.5*",
+        "gpt-5-5*"
+      ],
+      "note": "OpenAI: ~1.05M window. MRCR v2 8-needle: 90% at 32-64K, 83% at 64-128K, 74% at 512K-1M. Codex CLI caps it at 400K (harness entry) and field reports show the effective budget oscillating 258K-353K (openai/codex#30875)."
+    },
+    {
+      "id": "gpt-5.4",
+      "label": "GPT-5.4 (256K)",
+      "window": 256000,
+      "max_output": 128000,
+      "class": "200k",
+      "checked": "2026-09-02",
+      "match": [
+        "gpt-5.4*",
+        "gpt-5-4*"
+      ],
+      "note": "256K window; MRCR 8-needle 36.6% at 1M-scale tests means it was already weak beyond its window's midpoint. mini/nano variants (2026-03) unverified; treated the same."
+    },
+    {
+      "id": "gpt-5-400k",
+      "label": "GPT-5.x / Codex 400K-class",
+      "window": 400000,
+      "max_output": 128000,
+      "class": "400k",
+      "checked": "2026-09-02",
+      "match": [
+        "gpt-5.3*",
+        "gpt-5-3*",
+        "gpt-5.2*",
+        "gpt-5-2*",
+        "gpt-5.1*",
+        "gpt-5-1*",
+        "gpt-5-codex*",
+        "gpt-5-mini*",
+        "gpt-5-nano*",
+        "gpt-5",
+        "gpt-5.*",
+        "gpt-5-*",
+        "codex*"
+      ],
+      "note": "GPT-5 / 5.1 / 5.2 / 5.3-Codex families: 400K window (Copilot's /models endpoint lists context_window 400000 with max_prompt 128K-272K). Also the catch-all for later gpt-5.x ids until verified."
+    },
+    {
+      "id": "gpt-4.1",
+      "label": "GPT-4.1 (1M)",
+      "window": 1047576,
+      "max_output": 32768,
+      "class": "1m",
+      "checked": "2026-09-02",
+      "match": [
+        "gpt-4.1*",
+        "gpt-4-1*"
+      ],
+      "note": "Legacy; 1,047,576 input tokens."
+    },
+    {
+      "id": "openai-legacy",
+      "label": "OpenAI legacy (128-200K)",
+      "window": 200000,
+      "max_output": 100000,
+      "class": "200k",
+      "checked": "2026-09-02",
+      "match": [
+        "o3*",
+        "o4*",
+        "o1*",
+        "gpt-4o*",
+        "gpt-4*"
+      ],
+      "note": "o-series 200K, gpt-4o 128K; retired from ChatGPT in early 2026, may still appear in API/Copilot ids."
+    },
+    {
+      "id": "gemini-1m",
+      "label": "Gemini (1M)",
+      "window": 1048576,
+      "max_output": 65536,
+      "class": "1m",
+      "checked": "2026-09-17",
+      "match": [
+        "gemini-3*",
+        "gemini-2.5*",
+        "gemini-2-5*",
+        "gemini-2.0*",
+        "gemini*"
+      ],
+      "note": "Gemini 3 / 3.1 Pro and the 3.x Flash line (3.8 Flash released 2026-09-02): 1,048,576 input, 65,536 output. Long-context quality now differs sharply within the family: MRCR v2 8-needle (llm-stats, self-reported) Gemini 3.7 Flash 97%, 3.6 Flash 54%, 3.1 Pro 26% at 1M (77% at 128K for 3 Pro), so the 1M window is far more usable on 3.7+ Flash than on Pro. Gemini CLI compresses history automatically at model.compressionThreshold (default 0.5, confirmed 2026-09 in the config reference; contextManagement.historyWindow maxTokens 150000 / retainedTokens 40000)."
+    },
+    {
+      "id": "grok-4.5",
+      "label": "Grok 4.5 (500K)",
+      "window": 500000,
+      "max_output": 128000,
+      "class": "400k",
+      "checked": "2026-09-02",
+      "match": [
+        "grok-4.5*",
+        "grok-4-5*"
+      ],
+      "note": "Added to Copilot 2026-07-28 with up to 500K context."
+    },
+    {
+      "id": "grok",
+      "label": "Grok (256K)",
+      "window": 256000,
+      "max_output": 32000,
+      "class": "200k",
+      "checked": "2026-09-02",
+      "match": [
+        "grok*"
+      ],
+      "note": "Grok Code Fast 1 and Grok 4: 256K."
+    }
+  ],
+  "harnesses": {
+    "_about": "Caps the host tool imposes on top of the model's native window, and where it auto-compacts. by_family keys are family ids above. A window reported by the harness itself (Claude Code statusline context_window_size, Codex model_context_window, Cursor preCompact context_window_size) always wins; then ~/.ctxhealth/config.json windows.<harness>; then these defaults; then native. VS Code agent sessions are measured by their transcript: a Copilot events.jsonl gets the copilot cap, a Codex rollout the codex cap, a Claude transcript the native window.",
+    "claude": {
+      "label": "Claude Code",
+      "window": null,
+      "compact_reserve_tokens": 33000,
+      "note": "Native window by default for 1M models (Fable 5.1, Opus 5, Sonnet 5, Opus 4.6+). Auto-compacts at about window minus 33K (Sonnet 5: ~967K); /autocompact, --autocompact, CLAUDE_CODE_AUTO_COMPACT_WINDOW override. Hooks: UserPromptSubmit + SessionStart inject context; statusLine gives exact usage. code.claude.com/docs/en/context-window (2026-09-15) gives the startup breakdown (system prompt ~4.2K, MCP tools deferred by default, skills index not re-injected after /compact); changelog 2.1.269 fixed a context meter that double-counted advisor-tool turns and made auto-compact fire near half the real window, which explains earlier observed 83-90% compactions on 200K windows."
+    },
+    "cowork": {
+      "label": "Cowork (Claude Desktop)",
+      "window": null,
+      "compact_reserve_tokens": 33000,
+      "base_context_tokens": 105000,
+      "note": "Runs no hooks (claude-code#63360, #47993); the skill is the only in-session layer. A fresh session starts near 105K because of the loaded tool and skill catalog, so growth above that floor is the signal."
+    },
+    "copilot": {
+      "label": "Copilot CLI",
+      "window": 200000,
+      "compact_at": 0.8,
+      "note": "200K default cap (128K usable prompt on older models per /models endpoint), 1M opt-in since 2026-06-04 in VS Code and Copilot CLI: `config set windows.copilot 1000000`. Auto-compacts at ~80%. /context and /usage (and VS Code's chat-input meter) are authoritative. events.jsonl usage records are not a stable API (copilot-cli#3551); the parser falls back to a size estimate. Fable 5.1 and Gemini 3.8 Flash added 2026-09 (admin-enabled); CLI v1.0.81 hook inputs carry traceparent/tracestate and JSON output files carry per-agent usage (unverified live)."
+    },
+    "codex": {
+      "label": "Codex CLI",
+      "window": null,
+      "by_family": {
+        "gpt-5.5": 400000,
+        "gpt-6-astra": 600000
+      },
+      "compact_at": 0.9,
+      "note": "token_count events carry model_context_window (authoritative) and last_token_usage. model_auto_compact_token_limit defaults vary by model (<= 90% of the window). /status shows the percentage since v0.121. GPT-6 Astra (default since v0.153.1): users configure 600K; openai/codex#45074 shows compaction firing at an internal 623K while the UI showed ~388K, so on Astra report the number as rough and flag compaction proximity from model_context_window, not the displayed count. Docs moved to learn.chatgpt.com/docs/hooks; hooks gained async and mcp_tool types, additionalContextLimit 2,500 tokens."
+    },
+    "gemini": {
+      "label": "Gemini CLI",
+      "window": 1048576,
+      "compact_at": null,
+      "note": "Footer shows '(NN% context left)' natively; saved chats carry no token counts, so this tool only estimates from file size. Compression at model.compressionThreshold (0.5 documented) is routine, not a warning."
+    },
+    "cursor": {
+      "label": "Cursor",
+      "window": 200000,
+      "by_family": {
+        "claude-1m": 300000
+      },
+      "compact_at": null,
+      "note": "Default caps: Sonnet 5 200K, Opus 5 / Fable 5.1 300K, GPT-5.6 272K, Gemini 200K; Max mode 1M (`config set windows.cursor 1000000`). The chat context ring is authoritative; preCompact hooks receive exact context_tokens."
+    }
+  },
+  "baseline": {
+    "_about": "Startup (initial) context: the input of the session's FIRST assistant turn minus the estimated first prompt, i.e. system prompt + tool/MCP schemas + project instruction files + memory + skills catalog. Bands are fractions of the EFFECTIVE (harness) window, [notable, high, excessive], keyed by model class. They are JUDGMENT ESTIMATES seeded 2026-09-05 from the degradation evidence (instruction adherence softening near 20% of a 1M window; lost-in-the-middle pushing prefix instructions mid-window as the session grows; 200K-class harnesses compacting at 80-90%) and from observed platform floors (Cowork ~105K). RESEARCH.md 'Startup context' tracks the evidence; refine per model and platform there, log a C- entry when these move. Live measurements live in ~/.ctxhealth/baseline/<platform>.jsonl.",
+    "fractions": {
+      "1m": [
+        0.1,
+        0.2,
+        0.3
+      ],
+      "400k": [
+        0.1,
+        0.2,
+        0.3
+      ],
+      "200k": [
+        0.12,
+        0.2,
+        0.3
+      ]
+    },
+    "band_text": {
+      "ok": {
+        "label": "OK",
+        "effects": "",
+        "advice": ""
+      },
+      "notable": {
+        "label": "NOTABLE",
+        "effects": "sizable startup block; the instructions in it sit mid-window sooner as the session grows, and working room is reduced",
+        "advice": "no action needed now; when the inventory runs, look for a block that is not earning its keep (unused MCP servers, imported docs, skills catalog)"
+      },
+      "high": {
+        "label": "HIGH",
+        "effects": "a fifth or more of the window is spent before the first prompt; on 200K-class models this cuts working room sharply and pushes prefix instructions into the lost-in-the-middle zone early",
+        "advice": "trim the startup context for this platform: disconnect unused MCP servers, split or shorten instruction-file imports, or use a bigger-window model here"
+      },
+      "excessive": {
+        "label": "EXCESSIVE",
+        "effects": "most of the usable window is startup material; expect weaker instruction following from the first turn and early compaction",
+        "advice": "reduce the startup context before continuing; this model/platform combination starts already degraded"
+      }
+    },
+    "typical": {
+      "_about": "Observed startup sizes for orientation only; ~/.ctxhealth/baseline is the live record.",
+      "cowork": 105000
+    }
+  },
+  "selection": {
+    "_about": "Selection noise: how many SKILLS/tools compete for the model's choice at startup, which is a separate failure mode from size. A catalog can be cheap in tokens (name+description only) and still cost accuracy, because the model picks by matching the prompt against every description. Evidence (2026-09-06): chance-corrected tool-retrieval work (arXiv 2605.24660) finds standard retrievers degrade well before the catalog is large and that semantically near-duplicate entries ('calc_area_triangle' vs 'calculate_triangle_area') are the dominant difficulty, not raw count; survey numbers put ~50 tools at 84-95% selection accuracy, ~200 tools at 41-83%, ~740 tools at 0-20%; practitioner reports put the onset of overlap confusion around 30 entries and Anthropic's skills playbook draws its line at 8-12 skills. Claude Code itself caps the listing with skillListingBudgetFraction (default 0.01 of the window) and skillListingMaxDescChars (default 1536), dropping WHOLE descriptions for least-invoked skills when over budget - so an oversized catalog silently makes rare skills invisible rather than truncating evenly. Bands below are entry COUNTS of the visible catalog. Refine in RESEARCH.md 'Selection noise'; log a C- entry when they move.",
+    "counts": [
+      25,
+      40,
+      60
+    ],
+    "desc_chars_max": 1536,
+    "listing_budget_fraction": 0.01,
+    "cluster_min": 3,
+    "band_text": {
+      "ok": {
+        "label": "OK",
+        "effects": "",
+        "advice": ""
+      },
+      "notable": {
+        "label": "NOTABLE",
+        "effects": "the catalog is past the point where descriptions start to overlap; occasional wrong-skill or missed-skill picks",
+        "advice": "scope the project-specific skills to their own repo's .claude/skills instead of the user-level root"
+      },
+      "high": {
+        "label": "HIGH",
+        "effects": "selection accuracy measurably drops in this range and near-duplicate entries compete; Claude Code's listing budget may already be dropping least-invoked descriptions, making them uninvokable",
+        "advice": "cut the catalog to the skills this project can actually use: park the out-of-scope ones outside every skills root and link them per-repo"
+      },
+      "excessive": {
+        "label": "EXCESSIVE",
+        "effects": "catalogs this size land in the band where reported selection accuracy falls off sharply, and rare skills are effectively invisible under the listing budget",
+        "advice": "park most of the catalog now; keep a small always-on set and link the rest per-repo"
+      }
+    },
+    "listing_note": "code.claude.com/docs/en/skills (2026-09): the skills listing budget scales at 1% of the model's context window; descriptions are shortened to fit and, on overflow, dropped starting with the least-invoked skills; description plus when_to_use truncates at 1,536 characters; disable-model-invocation skills are excluded; the listing is not re-injected after /compact. The setting keys skillListingBudgetFraction / skillListingMaxDescChars appear only in third-party guides, not on the settings reference."
+  }
+}
