@@ -10,7 +10,7 @@ Nothing open. The evergreen unit still has no TESTS.md / evals suite (noted in C
 See [INDEX.md](INDEX.md): publish in the sibling-plugin shape; `evergreen.json.source` stays `null` in the repository; the plugin form is documented but `install` remains the recommended route.
 
 ## Next single action
-Watch the first CI run (the Windows job runs `install --agent claude --dry-run` from a clean checkout); then add the evals suite with `evergreen-test` before the next refresh.
+Add the evals suite with `evergreen-test` before the next refresh (due 2026-09-21). The first CI run passed on all six jobs and release v1.3.0 carries `context-health-1.3.0.zip`; the repository was created private pending the owner's decision to make it public.
 
 ## Gotchas
 Path-bearing edits on this machine go through a Python script file, never a Bash heredoc (backslashes are halved). `everlast.py note` needs `## Context` and `## Reasons` headings in a decision body and truncates slugs at about 60 characters: check the printed filename before writing a `Related:` link to it.

@@ -7,3 +7,4 @@ Append-only. One line per operation: `## [YYYY-MM-DD] op | title` where op is on
 ## [2026-09-18] add | decision: Publish context-health as a public repository in the sibling-plugin shape
 ## [2026-09-18] handoff | 16 lines
 ## [2026-09-18] index | rebuilt (2 entries)
+## [2026-09-18] update | repository m4bwav/context-health created and pushed, tag v1.3.0 released, CI green on six jobs
