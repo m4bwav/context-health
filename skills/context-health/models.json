@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1",
+  "version": "1.3.2",
   "last_checked": "2026-09-22",
   "_about": "Per-model context windows and degradation bands used by ctxhealth.py. Bands are research-derived ESTIMATES of a gradual gradient, not cliffs (Chroma Context Rot 2025; Anthropic 'gradient not cliff' guidance). Evidence and search plan: RESEARCH.md. Edit families/match to add a model; never hand-edit thresholds without logging a C- entry in CHANGELOG.md.",
   "profiles": {
@@ -133,7 +133,7 @@
         "sonnet-4.6*",
         "claude-mythos-preview*"
       ],
-      "note": "Fable 5.1 / Mythos 5.1 / Opus 5.5 / Opus 5 / Sonnet 5 / Opus 4.6-4.8 / Sonnet 4.6: 1M input, 128K output (300K output on the Batch API with a beta header). Opus 5.5 (claude-opus-5-5, released 2026-09-22) matches claude-opus-5*; 1M on every Claude Code plan (Opus 4.7 and later) and the `opus` alias and `default` model since Claude Code v2.1.280. Its thinking is always on and it thinks more per turn than Opus 5 at the same effort (most at xhigh/max), so on long tool loops context grows faster per turn; the Claude Code default effort is medium. No independent long-context benchmark published for the 5.x models yet (the Opus 5.5 launch post and docs give none; system card not yet read); bands come from Opus 4.6 MRCR (93% at 256K, 76% at 1M) and Sonnet 4.6 field reports (onset ~400K, unreliable past ~600K). Claude Code: auto-compact at roughly window minus ~33K (Sonnet 5 documented ~967K); CLAUDE_CODE_DISABLE_1M_CONTEXT=1 caps at 200K."
+      "note": "Fable 5.1 / Mythos 5.1 / Opus 5.5 / Opus 5 / Sonnet 5 / Opus 4.6-4.8 / Sonnet 4.6: 1M input, 128K output (300K output on the Batch API with a beta header). Opus 5.5 (claude-opus-5-5, released 2026-09-22) matches claude-opus-5*; 1M on every Claude Code plan (Opus 4.7 and later) and the `opus` alias and `default` model since Claude Code v2.1.280. Its thinking is always on and it thinks more per turn than Opus 5 at the same effort (most at xhigh/max), so on long tool loops context grows faster per turn; the Claude Code default effort is medium. No independent long-context benchmark published for the 5.x models yet (the Opus 5.5 system card gives only ProgramBench, an agentic benchmark with episodes up to 1M: 91.2% vs Opus 5 85.4%, not split by length); bands come from Opus 4.6 MRCR (93% at 256K, 76% at 1M) and Sonnet 4.6 field reports (onset ~400K, unreliable past ~600K). Claude Code: auto-compact at roughly window minus ~33K (Sonnet 5 documented ~967K); CLAUDE_CODE_DISABLE_1M_CONTEXT=1 caps at 200K."
     },
     {
       "id": "claude-200k",
@@ -161,6 +161,21 @@
       "note": "Haiku 4.5, Sonnet 4.5, Opus 4.5 and older: 200K. The trailing claude-* pattern catches unknown Claude ids conservatively; newer Claude models are 1M, so add them to claude-1m when they appear."
     },
     {
+      "id": "gpt-6-sol-luna",
+      "label": "GPT-6 Sol / Luna (922K input)",
+      "window": 922000,
+      "max_output": 128000,
+      "class": "1m",
+      "checked": "2026-09-22",
+      "match": [
+        "gpt-6-sol*",
+        "gpt-6-luna*",
+        "gpt-6.0-sol*",
+        "gpt-6.0-luna*"
+      ],
+      "note": "Released 2026-09-22: 1,050,000 total, 922K input, 128K output; the window here is the 922K input limit, since the meter counts input and a 1.05M base put the relaxed critical band (945K) past what the model accepts (secondary sources; openai.com returns 403 to fetch). Sol $2/$10, Luna $0.10/$0.50 per MTok, input past 272K billed at 2x. Trained with methods like GPT-6 Astra's, but no MRCR or other long-context score is published for either, so Astra's 96.3% does not carry over and the bands are the 1M-class defaults. In Codex from 0.156.x (model picker) and listed in GitHub Copilot; no Codex window cap is documented for them, so the Codex parser relies on token_count model_context_window."
+    },
+    {
       "id": "gpt-6-astra",
       "label": "GPT-6 Astra (1M)",
       "window": 1000000,
@@ -172,7 +187,7 @@
         "gpt-6*",
         "astra*"
       ],
-      "note": "Released 2026-09-03/04; 1M-token window (OpenAI). MRCR v2 8-needle: 100% at 256K-512K, 96.3% at 512K-1M, the strongest long-context score published so far. Default model in Codex CLI since v0.153.1; Codex users configure a 600K window for it (openai/codex#45074: effective 95%, auto-compact 90%, and the internal count can exceed the displayed one by 200K+, so treat Codex numbers on Astra as rough). Secondary sources give 922K input / 128K output and recommend auto_compact_token_limit 850000."
+      "note": "Released 2026-09-03/04; 1M-token window (OpenAI). MRCR v2 8-needle: 100% at 256K-512K, 96.3% at 512K-1M, the strongest long-context score published so far. Default model in Codex CLI since v0.153.1; Codex users configure a 600K window for it (openai/codex#45074: effective 95%, auto-compact 90%, and the internal count can exceed the displayed one by 200K+, so treat Codex numbers on Astra as rough). Secondary sources give 922K input / 128K output and recommend auto_compact_token_limit 850000. The gpt-6* pattern also catches GPT-6 ids not listed above (Sol and Luna have their own family) until they are verified."
     },
     {
       "id": "gpt-5.6",
@@ -185,7 +200,7 @@
         "gpt-5.6*",
         "gpt-5-6*"
       ],
-      "note": "Codex changelog corrected the GPT-5.6 windows to 272,000 (via secondary report); Cursor lists GPT-5.6 at 272K. MRCR v2 8-needle: Sol 91.5% at 256K-512K, 73.8% at 512K-1M (OpenAI, quoted against Astra). Verify against a primary OpenAI page on the next refresh."
+      "note": "Codex changelog corrected the GPT-5.6 windows to 272,000 (via secondary report); Cursor lists GPT-5.6 at 272K. MRCR v2 8-needle: Sol 91.5% at 256K-512K, 73.8% at 512K-1M (OpenAI, quoted against Astra). Verify against a primary OpenAI page on the next refresh. llm-stats (self-reported, 2026-09-23) also lists Terra 0.896 and Luna 0.413, so Luna is far weaker at long context than Sol or Terra."
     },
     {
       "id": "gpt-5.5",
@@ -314,7 +329,7 @@
       "label": "Claude Code",
       "window": null,
       "compact_reserve_tokens": 33000,
-      "note": "Native window by default for 1M models (Fable 5.1, Opus 5.5, Opus 5, Sonnet 5, Opus 4.6+; 4.7+ on every plan without [1m]). Auto-compacts at about window minus 33K (Sonnet 5: ~967K); /autocompact, --autocompact, CLAUDE_CODE_AUTO_COMPACT_WINDOW override. Hooks: UserPromptSubmit + SessionStart inject context; statusLine gives exact usage. code.claude.com/docs/en/context-window (2026-09-15) gives the startup breakdown (system prompt ~4.2K, MCP tools deferred by default, skills index not re-injected after /compact); changelog 2.1.269 fixed a context meter that double-counted advisor-tool turns and made auto-compact fire near half the real window, which explains earlier observed 83-90% compactions on 200K windows."
+      "note": "Native window by default for 1M models (Fable 5.1, Opus 5.5, Opus 5, Sonnet 5, Opus 4.6+; 4.7+ on every plan without [1m]). Auto-compacts at about window minus 33K (Sonnet 5: ~967K); /autocompact, --autocompact, CLAUDE_CODE_AUTO_COMPACT_WINDOW override. Hooks: UserPromptSubmit + SessionStart inject context; statusLine gives exact usage. code.claude.com/docs/en/context-window (2026-09-15) gives the startup breakdown (system prompt ~4.2K, MCP tools deferred by default, skills index not re-injected after /compact); changelog 2.1.273 (2026-09-15) fixed a context meter that double-counted advisor-tool turns and made auto-compact fire near half the real window, which explains earlier observed 83-90% compactions on 200K windows. 2.1.274 makes hook-driven sessions compact instead of ending with 'Prompt is too long'; 2.1.280 (2026-09-22) makes Opus 5.5 the default model on Pro through Enterprise (1M either way)."
     },
     "cowork": {
       "label": "Cowork (Claude Desktop)",
@@ -327,7 +342,7 @@
       "label": "Copilot CLI",
       "window": 200000,
       "compact_at": 0.8,
-      "note": "200K default cap (128K usable prompt on older models per /models endpoint), 1M opt-in since 2026-06-04 in VS Code and Copilot CLI: `config set windows.copilot 1000000`. Auto-compacts at ~80%. /context and /usage (and VS Code's chat-input meter) are authoritative. events.jsonl usage records are not a stable API (copilot-cli#3551); the parser falls back to a size estimate. Fable 5.1 and Gemini 3.8 Flash added 2026-09 (admin-enabled); CLI v1.0.81 hook inputs carry traceparent/tracestate and JSON output files carry per-agent usage (unverified live). Opus 5.5 added 2026-09-22 (Pro+, Max, Business, Enterprise; gradual rollout; context cap not stated, assume the 200K default)."
+      "note": "200K default cap (128K usable prompt on older models per /models endpoint), 1M opt-in since 2026-06-04 in VS Code and Copilot CLI: `config set windows.copilot 1000000`. Auto-compacts at ~80%. /context and /usage (and VS Code's chat-input meter) are authoritative. events.jsonl usage records are not a stable API (copilot-cli#3551); the parser falls back to a size estimate. Fable 5.1 and Gemini 3.8 Flash added 2026-09 (admin-enabled); CLI v1.0.81 hook inputs carry traceparent/tracestate and JSON output files carry per-agent usage (unverified live). Opus 5.5 added 2026-09-22 (Pro+, Max, Business, Enterprise; gradual rollout; context cap not stated, assume the 200K default). Copilot CLI support for claude-opus-5.5 from v1.0.89-0 (prerelease)."
     },
     "codex": {
       "label": "Codex CLI",
@@ -337,7 +352,7 @@
         "gpt-6-astra": 600000
       },
       "compact_at": 0.9,
-      "note": "token_count events carry model_context_window (authoritative) and last_token_usage. model_auto_compact_token_limit defaults vary by model (<= 90% of the window). /status shows the percentage since v0.121. GPT-6 Astra (default since v0.153.1): users configure 600K; openai/codex#45074 shows compaction firing at an internal 623K while the UI showed ~388K, so on Astra report the number as rough and flag compaction proximity from model_context_window, not the displayed count. Docs moved to learn.chatgpt.com/docs/hooks; hooks gained async and mcp_tool types, additionalContextLimit 2,500 tokens."
+      "note": "token_count events carry model_context_window (authoritative) and last_token_usage. model_auto_compact_token_limit defaults vary by model (<= 90% of the window). /status shows the percentage since v0.121. GPT-6 Astra (default since v0.153.1): users configure 600K; openai/codex#45074 shows compaction firing at an internal 623K while the UI showed ~388K, so on Astra report the number as rough and flag compaction proximity from model_context_window, not the displayed count. Docs moved to learn.chatgpt.com/docs/hooks; hooks gained async and mcp_tool types, additionalContextLimit 2,500 tokens. PR #45094 (merged 2026-09-12) estimates history tokens from content instead of serialized envelopes, which may narrow the #45074 gap (issue still open 2026-09-22); compaction on GPT-6 models is reported slow (#45433, 2-3+ minutes; #43062, hangs of 20+ minutes)."
     },
     "gemini": {
       "label": "Gemini CLI",
@@ -352,7 +367,7 @@
         "claude-1m": 300000
       },
       "compact_at": null,
-      "note": "Default caps: Sonnet 5 200K, Opus 5 / Fable 5.1 300K, GPT-5.6 272K, Gemini 200K; Max mode 1M (`config set windows.cursor 1000000`). The chat context ring is authoritative; preCompact hooks receive exact context_tokens."
+      "note": "Default caps: Sonnet 5 200K, Opus 5 / Fable 5.1 300K, GPT-5.6 272K, Gemini 200K; Max mode 1M (`config set windows.cursor 1000000`). The chat context ring is authoritative; preCompact hooks receive exact context_tokens. Opus 5.5 (matched to claude-1m): Cursor's model page says up to 1M with no long-context surcharge but gives no default (non-Max) cap; 300K assumed as for Opus 5 / Fable 5.1. The models, max-mode and pricing pages no longer carry a cap table."
     }
   },
   "baseline": {

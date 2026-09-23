@@ -66,9 +66,25 @@ Write an entry the moment a real signal happens: a user correction, the same err
 - Trigger: the startup-baseline feature needs per-platform records, but the CLI and the VS Code extension share settings.json, hooks, transcript paths and the hook stdin schema (2026-09-05)
 - Hypothesis: the extension spawns the same claude binary and marks it with `CLAUDE_CODE_ENTRYPOINT=claude-vscode` (observed in the hook's environment together with VSCODE_* variables and CLAUDE_CODE_EXECPATH under `.vscode/extensions/anthropic.claude-code-*`); the CLI sets `cli`. VSCODE_* alone is unreliable because a CLI run inside the VS Code terminal inherits them
 - Rule: `platform_for()` reads `CLAUDE_CODE_ENTRYPOINT`; never infer the extension from VSCODE_PID or TERM_PROGRAM. If Anthropic renames the value, `baseline` records land under claude-cli: check `ctxhealth.py baseline` after Claude Code upgrades when a VS Code session records as claude-cli
-- Evidence: hook environment dump 2026-09-05; R-20260905-1; tests/test_ctxhealth.py TestBaseline.test_platform_detection
+- Evidence: hook environment dump 2026-09-05; R-20260905-1; tests/test_ctxhealth.py TestBaseline.test_platform_detection; re-observed in a VS Code session on Claude Code 2.1.280 (2026-09-22, R-20260922-4)
 - Scope: env:claude-code
-- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-09-05
+- Status: active · helpful 2 · harmful 0 · last_confirmed 2026-09-22
+
+### L-009 · 2026-09-22 · Anthropic system cards are large PDFs; download and extract them instead of fetching the page
+- Trigger: fetching https://www.anthropic.com/claude-opus-5-5-system-card returned a 307 to a 17.8 MB, 230-page PDF on www-cdn.anthropic.com, and a page summarizer cannot be trusted to find a missing benchmark in that (2026-09-22)
+- Hypothesis: the claim that matters here is often an absence (no MRCR figure), which only a full-text search can establish; pypdf extracts these cards one word per line
+- Rule: `curl -sL -o card.pdf <redirect url>`, extract with pypdf, collapse whitespace per page, then grep for `mrcr|graphwalk|long[- ]context|needle|1M|compaction|context window` and read the hit pages; set PYTHONIOENCODING=utf-8 on Windows (ligatures such as U+FB01 break cp1252 printing)
+- Evidence: R-20260922-2 (section 8.10 Long context found on page 183; no retrieval benchmark anywhere in the card)
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-09-22
+
+### L-010 · 2026-09-22 · Attribute Claude Code changelog entries from the raw file, not from a summary
+- Trigger: the advisor-tool meter fix was recorded as 2.1.269 (R-20260917-5) and reported as 2.1.274 by the research subagent; the raw changelog puts it under 2.1.273 (2026-09-15)
+- Hypothesis: the changelog page is one long list of `<Update label="2.1.x">` blocks, and summarizers and skimmers attach an entry to a neighbouring version
+- Rule: fetch https://code.claude.com/docs/en/changelog.md with curl, find the entry's line, and take the nearest preceding `<Update label=...>` as its version before writing a version number into RESEARCH.md or models.json
+- Evidence: R-20260922-4
+- Scope: skill
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-09-22
 
 ## Bash-tool heredocs mangle backslash escapes (2026-09-06)
 

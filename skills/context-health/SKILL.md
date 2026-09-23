@@ -3,7 +3,7 @@ name: context-health
 description: "Check whether the current session's context is big enough to degrade the running model, and warn with effects plus one recommendation. Use when the user asks \"how big is this session\", \"context check\", \"are we near the limit\", \"should I start a new session\", \"is the context degrading\", when a session is visibly long (15+ substantial exchanges or several large file/research dumps), before starting a major new subtask in an already-long session, or when a [context-health] hook line appears at CAUTION or above and the user has not been told yet. Also use it to install or repair the hooks (\"install context health\", \"set up the context meter\"), or to refresh its model research. Also covers the startup (initial) context: \"how big is my starting context\", \"what is in my initial context\", \"is the system prompt too big for this model\", when a [context-health baseline] hook line asks for an audit or warns, or to review the recorded startup sizes per platform. Works in Claude Code, Cowork, Copilot CLI, VS Code, Codex CLI, Gemini CLI, Cursor."
 license: MIT
 metadata:
-  version: "1.3.1"
+  version: "1.3.2"
   evergreen: "fast tier; see MAINTENANCE.md"
 ---
 

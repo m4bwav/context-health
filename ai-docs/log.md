@@ -9,3 +9,4 @@ Append-only. One line per operation: `## [YYYY-MM-DD] op | title` where op is on
 ## [2026-09-18] index | rebuilt (2 entries)
 ## [2026-09-18] update | repository m4bwav/context-health created and pushed, tag v1.3.0 released, CI green on six jobs
 ## [2026-09-22] update | Claude Opus 5.5 recorded (R-20260922-1, C-20260922-1, v1.3.1); scheduled refresh still due
+## [2026-09-22] update | scheduled refresh (R-20260922-2..6, C-20260922-2, L-009, L-010, v1.3.2): GPT-6 Sol/Luna family, Opus 5.5 system card read, meter-fix version corrected; next due 2026-09-26
