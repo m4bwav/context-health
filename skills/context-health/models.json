@@ -1,6 +1,6 @@
 {
-  "version": "1.3.0",
-  "last_checked": "2026-09-17",
+  "version": "1.3.1",
+  "last_checked": "2026-09-22",
   "_about": "Per-model context windows and degradation bands used by ctxhealth.py. Bands are research-derived ESTIMATES of a gradual gradient, not cliffs (Chroma Context Rot 2025; Anthropic 'gradient not cliff' guidance). Evidence and search plan: RESEARCH.md. Edit families/match to add a model; never hand-edit thresholds without logging a C- entry in CHANGELOG.md.",
   "profiles": {
     "_about": "Fractions of the model's NATIVE window at which each band starts: [watch, caution, warning, critical]. Keyed by model class. 'balanced' is the default; 'conservative' reproduces the original 2026-08-29 absolute bands for 1M models (100K/200K/400K/600K); 'relaxed' follows the later evidence (Verdent: onset ~400K, unreliable past ~600K on Sonnet 4.6; Opus 4.6 MRCR 93% at 256K -> 76% at 1M).",
@@ -106,7 +106,7 @@
       "window": 1000000,
       "max_output": 128000,
       "class": "1m",
-      "checked": "2026-09-02",
+      "checked": "2026-09-22",
       "match": [
         "claude-fable-5*",
         "fable-5*",
@@ -133,7 +133,7 @@
         "sonnet-4.6*",
         "claude-mythos-preview*"
       ],
-      "note": "Fable 5.1 / Mythos 5.1 / Opus 5 / Sonnet 5 / Opus 4.6-4.8 / Sonnet 4.6: 1M input, 128K output (platform.claude.com context-windows doc, 2026-09-02). No independent long-context benchmark published for the 5.x models yet; bands come from Opus 4.6 MRCR (93% at 256K, 76% at 1M) and Sonnet 4.6 field reports (onset ~400K, unreliable past ~600K). Claude Code: auto-compact at roughly window minus ~33K (Sonnet 5 documented ~967K); CLAUDE_CODE_DISABLE_1M_CONTEXT=1 caps at 200K."
+      "note": "Fable 5.1 / Mythos 5.1 / Opus 5.5 / Opus 5 / Sonnet 5 / Opus 4.6-4.8 / Sonnet 4.6: 1M input, 128K output (300K output on the Batch API with a beta header). Opus 5.5 (claude-opus-5-5, released 2026-09-22) matches claude-opus-5*; 1M on every Claude Code plan (Opus 4.7 and later) and the `opus` alias and `default` model since Claude Code v2.1.280. Its thinking is always on and it thinks more per turn than Opus 5 at the same effort (most at xhigh/max), so on long tool loops context grows faster per turn; the Claude Code default effort is medium. No independent long-context benchmark published for the 5.x models yet (the Opus 5.5 launch post and docs give none; system card not yet read); bands come from Opus 4.6 MRCR (93% at 256K, 76% at 1M) and Sonnet 4.6 field reports (onset ~400K, unreliable past ~600K). Claude Code: auto-compact at roughly window minus ~33K (Sonnet 5 documented ~967K); CLAUDE_CODE_DISABLE_1M_CONTEXT=1 caps at 200K."
     },
     {
       "id": "claude-200k",
@@ -314,7 +314,7 @@
       "label": "Claude Code",
       "window": null,
       "compact_reserve_tokens": 33000,
-      "note": "Native window by default for 1M models (Fable 5.1, Opus 5, Sonnet 5, Opus 4.6+). Auto-compacts at about window minus 33K (Sonnet 5: ~967K); /autocompact, --autocompact, CLAUDE_CODE_AUTO_COMPACT_WINDOW override. Hooks: UserPromptSubmit + SessionStart inject context; statusLine gives exact usage. code.claude.com/docs/en/context-window (2026-09-15) gives the startup breakdown (system prompt ~4.2K, MCP tools deferred by default, skills index not re-injected after /compact); changelog 2.1.269 fixed a context meter that double-counted advisor-tool turns and made auto-compact fire near half the real window, which explains earlier observed 83-90% compactions on 200K windows."
+      "note": "Native window by default for 1M models (Fable 5.1, Opus 5.5, Opus 5, Sonnet 5, Opus 4.6+; 4.7+ on every plan without [1m]). Auto-compacts at about window minus 33K (Sonnet 5: ~967K); /autocompact, --autocompact, CLAUDE_CODE_AUTO_COMPACT_WINDOW override. Hooks: UserPromptSubmit + SessionStart inject context; statusLine gives exact usage. code.claude.com/docs/en/context-window (2026-09-15) gives the startup breakdown (system prompt ~4.2K, MCP tools deferred by default, skills index not re-injected after /compact); changelog 2.1.269 fixed a context meter that double-counted advisor-tool turns and made auto-compact fire near half the real window, which explains earlier observed 83-90% compactions on 200K windows."
     },
     "cowork": {
       "label": "Cowork (Claude Desktop)",
@@ -327,7 +327,7 @@
       "label": "Copilot CLI",
       "window": 200000,
       "compact_at": 0.8,
-      "note": "200K default cap (128K usable prompt on older models per /models endpoint), 1M opt-in since 2026-06-04 in VS Code and Copilot CLI: `config set windows.copilot 1000000`. Auto-compacts at ~80%. /context and /usage (and VS Code's chat-input meter) are authoritative. events.jsonl usage records are not a stable API (copilot-cli#3551); the parser falls back to a size estimate. Fable 5.1 and Gemini 3.8 Flash added 2026-09 (admin-enabled); CLI v1.0.81 hook inputs carry traceparent/tracestate and JSON output files carry per-agent usage (unverified live)."
+      "note": "200K default cap (128K usable prompt on older models per /models endpoint), 1M opt-in since 2026-06-04 in VS Code and Copilot CLI: `config set windows.copilot 1000000`. Auto-compacts at ~80%. /context and /usage (and VS Code's chat-input meter) are authoritative. events.jsonl usage records are not a stable API (copilot-cli#3551); the parser falls back to a size estimate. Fable 5.1 and Gemini 3.8 Flash added 2026-09 (admin-enabled); CLI v1.0.81 hook inputs carry traceparent/tracestate and JSON output files carry per-agent usage (unverified live). Opus 5.5 added 2026-09-22 (Pro+, Max, Business, Enterprise; gradual rollout; context cap not stated, assume the 200K default)."
     },
     "codex": {
       "label": "Codex CLI",

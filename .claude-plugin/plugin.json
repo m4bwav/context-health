@@ -1,6 +1,6 @@
 {
   "name": "context-health",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Cross-agent context health: warns when a session's context is large enough to degrade the running model, and when the startup (initial) context is already too large for the model and platform, using research-derived per-model bands that refresh themselves (evergreen). Hooks for Claude Code, Copilot CLI, VS Code, Codex, Gemini CLI, Cursor; a Claude Code status line; an on-demand skill; a terminal report.",
   "author": {
     "name": "Mark Rogers"

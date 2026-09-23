@@ -58,7 +58,7 @@ class Base(unittest.TestCase):
 class TestModels(Base):
     def test_families(self):
         cases = {
-            "claude-fable-5-1": ("claude-1m", 1000000), "claude-opus-5[1m]": ("claude-1m", 1000000),
+            "claude-fable-5-1": ("claude-1m", 1000000), "claude-opus-5-5": ("claude-1m", 1000000), "claude-opus-5[1m]": ("claude-1m", 1000000),
             "anthropic.claude-sonnet-4-5-20250929-v1:0": ("claude-200k", 200000), "claude-haiku-4-5-20251001": ("claude-200k", 200000),
             "opus": ("claude-1m", 1000000), "claude-opus-4-6": ("claude-1m", 1000000), "claude-opus-4-5": ("claude-200k", 200000),
             "gpt-5.5": ("gpt-5.5", 1050000), "gpt-5.5-codex": ("gpt-5.5", 1050000), "gpt-5.4": ("gpt-5.4", 256000),
