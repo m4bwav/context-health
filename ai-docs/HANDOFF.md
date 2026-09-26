@@ -10,7 +10,7 @@ Nothing open. The evergreen unit still has no TESTS.md / evals suite (noted in C
 See [INDEX.md](INDEX.md): publish in the sibling-plugin shape; `evergreen.json.source` stays `null` in the repository; the plugin form is documented but `install` remains the recommended route.
 
 ## Next single action
-Add the evals suite with `evergreen-test` before the next refresh (due 2026-09-29). CI is green on all six jobs with no deprecation warnings (run 36267921519); the repository is still private, pending the owner's decision to make it public.
+Add the evals suite with `evergreen-test` before the next refresh (due 2026-09-29). CI is green on all six jobs with no deprecation warnings (run 36267921519); the repository was made public on 2026-09-26 after a re-scan of every commit (files and messages) for the scrubbed private strings found nothing.
 
 ## Gotchas
 Path-bearing edits on this machine go through a Python script file, never a Bash heredoc (backslashes are halved). `everlast.py note` needs `## Context` and `## Reasons` headings in a decision body and truncates slugs at about 60 characters: check the printed filename before writing a `Related:` link to it.
