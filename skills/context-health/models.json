@@ -349,10 +349,11 @@
       "window": null,
       "by_family": {
         "gpt-5.5": 400000,
-        "gpt-6-astra": 600000
+        "gpt-6-astra": 600000,
+        "gpt-6-sol-luna": 272000
       },
       "compact_at": 0.9,
-      "note": "token_count events carry model_context_window (authoritative) and last_token_usage. model_auto_compact_token_limit defaults vary by model (<= 90% of the window). /status shows the percentage since v0.121. GPT-6 Astra (default since v0.153.1): users configure 600K; openai/codex#45074 shows compaction firing at an internal 623K while the UI showed ~388K, so on Astra report the number as rough and flag compaction proximity from model_context_window, not the displayed count. Docs moved to learn.chatgpt.com/docs/hooks; hooks gained async and mcp_tool types, additionalContextLimit 2,500 tokens. PR #45094 (merged 2026-09-12) estimates history tokens from content instead of serialized envelopes, which may narrow the #45074 gap (issue still open 2026-09-22); compaction on GPT-6 models is reported slow (#45433, 2-3+ minutes; #43062, hangs of 20+ minutes)."
+      "note": "token_count events carry model_context_window (authoritative) and last_token_usage. model_auto_compact_token_limit defaults vary by model (<= 90% of the window). /status shows the percentage since v0.121. GPT-6 Astra (default since v0.153.1): users configure 600K; openai/codex#45074 shows compaction firing at an internal 623K while the UI showed ~388K, so on Astra report the number as rough and flag compaction proximity from model_context_window, not the displayed count. Docs moved to learn.chatgpt.com/docs/hooks; hooks gained async and mcp_tool types, additionalContextLimit 2,500 tokens. PR #45094 (merged 2026-09-12) estimates history tokens from content instead of serialized envelopes, which may narrow the #45074 gap (issue still open 2026-09-22); compaction on GPT-6 models is reported slow (#45433, 2-3+ minutes; #43062, hangs of 20+ minutes). GPT-6 Sol (openai/codex#47805, 0.156.1, 2026-09-24): Codex's catalog has context_window 272,000 (effective 95%, about 258.4K) and max_context_window 872,000; a model_context_window override of 1M is cut to 828.4K; Luna presumably the same. 0.157.0 resumes from the latest compaction boundary, so read the last token_count, never a sum."
     },
     "gemini": {
       "label": "Gemini CLI",

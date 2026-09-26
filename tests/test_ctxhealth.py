@@ -128,6 +128,12 @@ class TestEvaluate(Base):
         self.assertEqual(ev["degradation_band"], 1)  # 300K >= 20% of 1.05M
         self.assertEqual(ev["compaction"], 1)  # 75% of 400K, compact at 90%
 
+    def test_codex_sol_default_cap(self):
+        # Codex runs GPT-6 Sol at 272K by default (openai/codex#47805), not the model's 922K input window.
+        ev = ch.evaluate(self.models, self.cfg, 200000, "gpt-6-sol", "codex")
+        self.assertEqual(ev["harness_window"], 272000)
+        self.assertEqual(ev["native_window"], 922000)
+
     def test_cowork_harness(self):
         p = "C:/Users/x/AppData/Roaming/Claude/local-agent-mode-sessions/a/b/local_c/.claude/projects/d/e.jsonl"
         self.assertEqual(ch.evaluate(self.models, self.cfg, 1000, "claude-fable-5-1", "claude", p)["harness"], "cowork")

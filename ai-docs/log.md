@@ -11,3 +11,4 @@ Append-only. One line per operation: `## [YYYY-MM-DD] op | title` where op is on
 ## [2026-09-22] update | Claude Opus 5.5 recorded (R-20260922-1, C-20260922-1, v1.3.1); scheduled refresh still due
 ## [2026-09-22] update | scheduled refresh (R-20260922-2..6, C-20260922-2, L-009, L-010, v1.3.2): GPT-6 Sol/Luna family, Opus 5.5 system card read, meter-fix version corrected; next due 2026-09-26
 ## [2026-09-23] update | CLAUDE.md imports AGENTS.md with an @AGENTS.md line (Claude Code 2.1.277+ loads nothing from a prose pointer); .github/copilot-instructions.md kept as the Copilot pointer
+## [2026-09-26] update | research refresh C-20260926-1 (R-20260926-1, -2): Codex caps GPT-6 Sol at 272K by default (#47805; models.json by_family, test_codex_sol_default_cap), Sol window confirmed on developers.openai.com, MCP server instructions in the startup inventory; plugin eval sandbox limits noted; unittest 43/43

@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20260926-1 · 2026-09-26 · Codex GPT-6 Sol cap 272K; MCP server instructions in the startup inventory
+- because: R-20260926-1
+- files: models.json (harnesses.codex.by_family gpt-6-sol-luna 272000; codex note), SKILL.md (Step 1 cap list; Startup context), tests/test_ctxhealth.py (test_codex_sol_default_cap), RESEARCH.md (R-20260926-1, R-20260926-2)
+- A Codex Sol session without a rollout window was judged against 922K, so its bands were about 3.5x too loose; Claude Code now counts MCP server instructions as their own startup block.
+
 ### C-20260922-2 · 2026-09-22 · Refresh: GPT-6 Sol / Luna family, Opus 5.5 system card, Claude Code changelog correction, harness notes (v1.3.2)
 - because: R-20260922-2 through R-20260922-6; L-008 (confirmed), L-009, L-010
 - files: models.json (new family gpt-6-sol-luna ahead of gpt-6-astra; gpt-6-astra and gpt-5.6 notes; claude-1m note cites the system card; harnesses claude, copilot, cursor and codex notes; version), ../../tests/test_ctxhealth.py (family table expects gpt-6-sol and gpt-6-luna in gpt-6-sol-luna), RESEARCH.md (header; Current understanding: Windows, Measured long-context quality, compaction, Harness caps; Open questions; Search plan; R-20260922-2..6; R-20260917-5 correction pointer), LEARNINGS.md (L-008 confirmed; L-009, L-010), evergreen.json (volatile_claims, counts, version, schedule via `evergreen.py checked`), SKILL.md (metadata version), ctxhealth.py (VERSION), ../../plugin.json and ../../.claude-plugin/plugin.json (1.3.2)
