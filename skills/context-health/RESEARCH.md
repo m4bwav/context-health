@@ -79,6 +79,13 @@ Best sources (primary first): platform.claude.com/docs (models overview, context
 
 ## Findings log
 
+### R-20260926-3 · 2026-09-26 · Subject: skill selection noise is driven by overlap more than count; no validated lexical proxy
+- Summary: arXiv 2601.04748 (v2, 2026-01-14; GPT-4o-mini and GPT-4o, 200 synthetic skills in 8 domains) fits selection accuracy to alpha/(1+(n/kappa)^gamma): above 90% up to 20 skills, degrading beyond 30, about 20% at 200; kappa 91.8 / 83.5; at a fixed 20 skills one hand-written competitor per skill costs 7-30 points and two cost 17-63; hierarchical routing at 60+ skills lifts GPT-4o-mini from about 45% to 83-85%. Competitors are hand-written, not scored by any similarity metric. arXiv 2605.24050 (2026-05-21, rev. 2026-06-23): pass rate falls up to 21% going to 202 skills; skill shadowing (wrong or abandoned selection), not the larger context, is the primary cause; context overhead is indistinguishable from zero. arXiv 2606.10388 (2026-06-09, final 2026-09-11, "Right Family, Wrong Skill"): retrievers with Recall@3 0.848-0.888 expose a risky same-family sibling at 0.346-0.372; a score-and-cluster pipeline cuts that to 0.128-0.182. arXiv 2510.20036 (ToolScope) flags merge candidates at embedding cosine 0.77-0.82; arXiv 2602.08004 finds 46.3% of 40,285 marketplace skills share a normalised name and that embeddings did not separate true duplicates reliably. arXiv 2605.24660: BM25 is well below embeddings for query-to-tool matching. Vendor limits: Claude Code cuts description plus when_to_use at 1,536 characters and drops least-invoked descriptions over a budget of 1% of the window; Codex gives the list 2% of the window (8,000 characters when unknown); the Agent Skills spec caps descriptions at 1,024 characters. Nothing validates word Jaccard or TF-IDF cosine against model confusion, so the check's 0.45 / 0.65 thresholds are inference, checked only against one 44-skill catalog where 3 pairs passed 0.45.
+- Track: subject
+- Sources: https://arxiv.org/html/2601.04748v2, https://arxiv.org/abs/2605.24050, https://arxiv.org/abs/2606.10388, https://arxiv.org/html/2510.20036, https://arxiv.org/abs/2602.08004, https://arxiv.org/abs/2605.24660, https://arxiv.org/abs/2609.09233, https://code.claude.com/docs/en/skills, https://learn.chatgpt.com/docs/build-skills
+- Magnitude: 0.5
+- Applied: C-20260926-2 (models.json selection; SKILL.md Selection noise; ctxhealth.py similar_pairs, selection_step)
+
 ### R-20260926-2 · 2026-09-26 · Testing, tooling, practice: plugin eval limits, context-mode, auto-compact desync
 - Summary: `claude plugin eval` (since 2.1.269) runs `evals/<case>/prompt.md` plus graders three times against a no-plugin baseline; it and skill-creator's evals.json do not read each other's files; the sandbox has no user hooks, memory, CLAUDE.md or home directory, native Windows needs WSL2 for shell grants, and a third-party pilot (2.1.278) found UserPromptSubmit hooks never fire there (SessionStart does), so cases must scaffold a fixture transcript and call `CTX status --file`. Tooling: mksglu/context-mode (24.1K stars, ELv2) hooks 17 platforms to shrink context (not to warn at thresholds); it calls Cursor's SessionStart missing, which conflicts with this unit's Cursor notes; the skills.sh `context-window-management` skill (1.5K installs) is advice only; statuslines found are Claude-only. None duplicates per-model bands. Practice: anthropics/claude-code#85205 (closed not planned) showed some 1M Opus sessions with a 150K auto-compact window, so prefer the reported window over the native one (the meter already does). Anthropic's session-management post matches the unit's recommendations.
 - Track: testing, tooling, practice
@@ -255,7 +262,13 @@ Seeded 2026-09-06. Distinct from startup SIZE: the cost is selection accuracy, n
   30-entry overlap onset and the ~50-tool accuracy shoulder; skills are coarser and more distinct than API
   tools, so the bands sit above the 8-12 playbook figure.
 
-Search plan on refresh: primary Anthropic docs for the two listing settings; new function-calling benchmarks
+- 2026-09-26 (R-20260926-3): the count bands now rest on the 2601.04748 curve (above 90% to 20, degrading
+  past 30, routing by 60), and the check scores description overlap separately because overlap, not count,
+  is what the 2026 work finds costs accuracy. The similarity thresholds are uncalibrated inference.
+
+Search plan on refresh: any study that validates a cheap lexical similarity against skill confusion (would
+let the 0.45 / 0.65 thresholds be calibrated); newer skill-library scaling sweeps on current Claude models;
+primary Anthropic docs for the two listing settings; new function-calling benchmarks
 with catalog-size sweeps (BFCL, ToolBench, LongFuncEval); any published per-model tool-count guidance.
 
 Sources: https://arxiv.org/html/2605.24660v1 ; https://claudefa.st/blog/guide/mechanics/skill-listing-budget ;

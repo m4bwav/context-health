@@ -48,6 +48,7 @@ class Base(unittest.TestCase):
         ch.CFG_DIR = os.environ["CTXHEALTH_HOME"]
         ch.CFG_PATH = os.path.join(ch.CFG_DIR, "config.json")
         ch.STATE_DIR = os.path.join(ch.CFG_DIR, "state")
+        os.environ["CTXHEALTH_SKILLS_HOME"] = os.path.join(self.tmp, "skillshome")  # never scan the real catalog
         self.models = ch.load_models()
         self.cfg = ch.load_cfg()
 
@@ -716,6 +717,117 @@ class TestBaseline(Base):
         self.assertIn("NOTABLE", text)
         self.assertIn("no startup baselines recorded yet", text)
         self.assertIn("context: ~300K", text)
+
+
+def skill(root, name, desc):
+    d = os.path.join(root, name)
+    os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, "SKILL.md"), "w", encoding="utf-8") as f:
+        f.write("---\nname: %s\ndescription: %s\n---\n# %s\n" % (name, desc, name))
+
+
+SCAN = "Collect articles from news feeds about databases and storage engines, summarise each article into notes, tag topics, track trends and harvest reader comments"
+
+
+class TestSelection(Base):
+    def setUp(self):
+        Base.setUp(self)
+        self.sh = os.environ["CTXHEALTH_SKILLS_HOME"]
+        self.user = os.path.join(self.sh, ".claude", "skills")
+        self.agents = os.path.join(self.sh, ".agents", "skills")
+
+    def run_hook(self, sid, cwd="/proj"):
+        p = self.path("%s.jsonl" % sid)
+        write(p, claude_lines(30000))
+        r = subprocess.run([sys.executable, os.path.join(SKILL, "ctxhealth.py"), "hook", "--agent", "claude"],
+                           input=json.dumps({"session_id": sid, "transcript_path": p, "cwd": cwd, "hook_event_name": "UserPromptSubmit"}).encode("utf-8"),
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(os.environ), timeout=30)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return r.stdout.decode("utf-8").strip()
+
+    def test_overlap_mirror_clash_and_family(self):
+        skill(self.user, "feed-scan", SCAN)
+        skill(self.user, "radar-sweep", SCAN + " daily")
+        skill(self.user, "feed-ask", SCAN + " and ask")  # a sibling: same-family pairs are the documented risk, so they count
+        skill(self.user, "painter", "Generate images, sprites and textures with a local diffusion server for game assets")
+        skill(self.agents, "painter", "Generate images, sprites and textures with a local diffusion server for game assets")  # mirror
+        skill(self.agents, "feed-scan", "An older, different description of the scanner")  # clash
+        ev = ch.evaluate_selection(self.models, self.cfg, None)
+        self.assertEqual(ev["count"], 5)
+        self.assertEqual(ev["clashes"], ["feed-scan"])
+        pairs = [(a, b) for _, a, b in ev["overlaps"]]
+        self.assertIn(("feed-scan", "radar-sweep"), pairs)
+        self.assertIn(("feed-ask", "radar-sweep"), pairs)
+        self.assertIn(("feed-ask", "feed-scan"), pairs)
+        self.assertTrue(all(sc >= 0.65 for sc, _, _ in ev["near_duplicates"]) and ev["near_duplicates"])
+        self.assertFalse(any("painter" in p for p in pairs))
+        claude = ch.evaluate_selection(self.models, self.cfg, None, agent="claude")  # Claude Code skips ~/.agents
+        self.assertEqual((claude["count"], claude["clashes"]), (4, []))
+        text = "\n".join(ch.describe_selection(self.models, self.cfg, ev))
+        self.assertIn("similar descriptions", text)
+        self.assertIn("same name, different descriptions", text)
+        skill(self.user, "tiny", "Helps with documents")
+        skill(self.user, "huge", "Handles ledgers. " * 70)
+        ev = ch.evaluate_selection(self.models, self.cfg, None, agent="claude")
+        self.assertEqual((ev["vague"], ev["over_spec"]), (["tiny"], ["huge"]))
+
+    def test_installed_plugins_scope_and_disable(self):
+        cache = os.path.join(self.sh, ".claude", "plugins", "cache", "mk")
+        for plug in ("alpha", "beta", "gamma"):
+            skill(os.path.join(cache, plug, "1.0", "skills"), plug + "-one", "Does %s things" % plug)
+        ch.write_json(os.path.join(self.sh, ".claude", "plugins", "installed_plugins.json"), {"version": 2, "plugins": {
+            "alpha@mk": [{"scope": "user", "installPath": os.path.join(cache, "alpha", "1.0")}],
+            "beta@mk": [{"scope": "project", "projectPath": self.path("proj"), "installPath": os.path.join(cache, "beta", "1.0")}],
+            "gamma@mk": [{"scope": "user", "installPath": os.path.join(cache, "gamma", "1.0")}]}})
+        ch.write_json(os.path.join(self.sh, ".claude", "settings.json"), {"enabledPlugins": {"gamma@mk": False}})
+
+        def names(proj):
+            return sorted(s["name"] for s in ch.scan_skills(proj, "claude"))
+        self.assertEqual(names(None), ["alpha-one"])
+        self.assertEqual(names(os.path.join(self.path("proj"), "sub")), ["alpha-one", "beta-one"])
+        self.assertEqual(ch.scan_skills(None, "claude")[0]["plugin"], "alpha")
+
+    def test_hook_checks_every_n_sessions_and_does_not_repeat(self):
+        ch.write_json(ch.CFG_PATH, {"selection": {"check_every": 3}})
+        skill(self.user, "feed-scan", SCAN)
+        skill(self.user, "radar-sweep", SCAN + " daily")
+        outs = [self.run_hook("q%d" % i) for i in range(5)]
+        obj = json.loads(outs[0])  # the first session checks
+        self.assertIn("[context-health selection]", obj["hookSpecificOutput"]["additionalContext"])
+        self.assertIn("feed-scan ~ radar-sweep", obj["hookSpecificOutput"]["additionalContext"])
+        self.assertIn("near-duplicate", obj["hookSpecificOutput"]["additionalContext"])
+        self.assertIn("skill catalog check", obj["systemMessage"])
+        self.assertEqual(outs[1:3], ["", ""])  # not due
+        self.assertEqual(outs[3], "")  # due, but the same findings were already reported this week
+        self.assertEqual(outs[4], "")
+        meta = load(os.path.join(ch.CFG_DIR, "selection.json"))
+        self.assertEqual((meta["sessions"], meta["last_check_session"]), (5, 4))
+        self.assertEqual(self.run_hook("q0"), "")  # same session again: done
+        skill(self.user, "radar-report", SCAN + " weekly")  # new findings surface at the next due session
+        outs = [self.run_hook("r%d" % i) for i in range(2)]  # sessions 6 and 7; 7 is due (last check 4, every 3)
+        self.assertEqual(outs[0], "")
+        self.assertIn("radar-report", json.loads(outs[1])["hookSpecificOutput"]["additionalContext"])
+
+    def test_clean_catalog_and_disabled_are_silent(self):
+        skill(self.user, "painter", "Generate images, sprites and textures with a local diffusion server for game assets")
+        self.assertEqual(self.run_hook("c1"), "")
+        self.assertEqual(load(os.path.join(ch.CFG_DIR, "selection.json"))["last_check_session"], 1)
+        ch.write_json(ch.CFG_PATH, {"selection": {"enabled": False}})
+        skill(self.user, "feed-scan", SCAN)
+        skill(self.user, "radar-sweep", SCAN + " daily")
+        self.assertEqual(self.run_hook("c2"), "")
+
+        class A:
+            op = "set"
+            key = value = None
+        buf = io.StringIO(); o = sys.stdout; sys.stdout = buf
+        try:
+            for key, val, rc in (("selection.check_every", "0", 2), ("selection.overlap", "1.5", 2), ("selection.overlap", "0.25", 0),
+                                 ("selection.check_every", "4", 0), ("selection.nope", "1", 2)):
+                A.key, A.value = key, val
+                self.assertEqual(ch.cmd_config(A()), rc, (key, val, buf.getvalue()))
+        finally:
+            sys.stdout = o
 
 
 if __name__ == "__main__":

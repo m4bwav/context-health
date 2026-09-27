@@ -1,5 +1,5 @@
 {
-  "version": "1.3.2",
+  "version": "1.4.0",
   "last_checked": "2026-09-22",
   "_about": "Per-model context windows and degradation bands used by ctxhealth.py. Bands are research-derived ESTIMATES of a gradual gradient, not cliffs (Chroma Context Rot 2025; Anthropic 'gradient not cliff' guidance). Evidence and search plan: RESEARCH.md. Edit families/match to add a model; never hand-edit thresholds without logging a C- entry in CHANGELOG.md.",
   "profiles": {
@@ -418,7 +418,7 @@
     }
   },
   "selection": {
-    "_about": "Selection noise: how many SKILLS/tools compete for the model's choice at startup, which is a separate failure mode from size. A catalog can be cheap in tokens (name+description only) and still cost accuracy, because the model picks by matching the prompt against every description. Evidence (2026-09-06): chance-corrected tool-retrieval work (arXiv 2605.24660) finds standard retrievers degrade well before the catalog is large and that semantically near-duplicate entries ('calc_area_triangle' vs 'calculate_triangle_area') are the dominant difficulty, not raw count; survey numbers put ~50 tools at 84-95% selection accuracy, ~200 tools at 41-83%, ~740 tools at 0-20%; practitioner reports put the onset of overlap confusion around 30 entries and Anthropic's skills playbook draws its line at 8-12 skills. Claude Code itself caps the listing with skillListingBudgetFraction (default 0.01 of the window) and skillListingMaxDescChars (default 1536), dropping WHOLE descriptions for least-invoked skills when over budget - so an oversized catalog silently makes rare skills invisible rather than truncating evenly. Bands below are entry COUNTS of the visible catalog. Refine in RESEARCH.md 'Selection noise'; log a C- entry when they move.",
+    "_about": "Selection noise: how many SKILLS/tools compete for the model's choice at startup, which is a separate failure mode from size. A catalog can be cheap in tokens (name+description only) and still cost accuracy, because the model picks by matching the prompt against every description. Evidence (2026-09-06): chance-corrected tool-retrieval work (arXiv 2605.24660) finds standard retrievers degrade well before the catalog is large and that semantically near-duplicate entries ('calc_area_triangle' vs 'calculate_triangle_area') are the dominant difficulty, not raw count; survey numbers put ~50 tools at 84-95% selection accuracy, ~200 tools at 41-83%, ~740 tools at 0-20%; practitioner reports put the onset of overlap confusion around 30 entries and Anthropic's skills playbook draws its line at 8-12 skills. Claude Code itself caps the listing with skillListingBudgetFraction (default 0.01 of the window) and skillListingMaxDescChars (default 1536), dropping WHOLE descriptions for least-invoked skills when over budget - so an oversized catalog silently makes rare skills invisible rather than truncating evenly. Bands below are entry COUNTS of the visible catalog. 2026-09-26 re-anchoring (R-20260926-3): arXiv 2601.04748 fits selection accuracy as a curve that stays above 90% up to 20 skills and degrades beyond 30 (GPT-4o-mini about 70% at 50, 45% at 100; half-capacity kappa 92 / 84 skills for GPT-4o-mini / GPT-4o), and flat selection sits at about 45-63% by 60 skills where hierarchical routing recovers +37-40 points: 25 marks the end of the safe zone, 40 the measured drop, 60 the routing threshold. The curve is from GPT-4o-class models on synthetic skills, so these are risk bands, not limits. Overlap between descriptions is reported separately (similarity) because at a fixed size competitors cost 7-63 points. 2026-09-26 re-anchoring (R-20260926-3): arXiv 2601.04748 fits selection accuracy as a curve that stays above 90% up to 20 skills and degrades beyond 30 (GPT-4o-mini about 70% at 50, 45% at 100; half-capacity kappa 92 / 84 skills for GPT-4o-mini / GPT-4o), and flat selection sits at about 45-63% by 60 skills where hierarchical routing recovers +37-40 points: 25 marks the end of the safe zone, 40 the measured drop, 60 the routing threshold. The curve is from GPT-4o-class models on synthetic skills, so these are risk bands, not limits. Overlap between descriptions is reported separately (similarity) because at a fixed size competitors cost 7-63 points. Refine in RESEARCH.md 'Selection noise'; log a C- entry when they move.",
     "counts": [
       25,
       40,
@@ -427,6 +427,13 @@
     "desc_chars_max": 1536,
     "listing_budget_fraction": 0.01,
     "cluster_min": 3,
+  "similarity": {
+   "_about": "TF-IDF cosine between skill descriptions (skill and plugin name words removed, IDF over the installed catalog). No study validates a lexical threshold; these sit below ToolScope's 0.77-0.82 embedding-cosine merge band (arXiv 2510.20036) because lexical cosine runs lower for the same pair, and were checked against one real 44-skill catalog where only 3 pairs passed 0.45. Evidence that overlap matters more than count: arXiv 2601.04748, 2605.24050, 2606.10388 (RESEARCH.md R-20260926-3).",
+   "possible": 0.45,
+   "near_duplicate": 0.65
+  },
+  "desc_chars_spec": 1024,
+  "desc_chars_vague": 40,
     "band_text": {
       "ok": {
         "label": "OK",

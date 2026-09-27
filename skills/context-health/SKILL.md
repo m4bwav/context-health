@@ -1,9 +1,9 @@
 ---
 name: context-health
-description: "Check whether the current session's context is big enough to degrade the running model, and warn with effects plus one recommendation. Use when the user asks \"how big is this session\", \"context check\", \"are we near the limit\", \"should I start a new session\", \"is the context degrading\", when a session is visibly long (15+ substantial exchanges or several large file/research dumps), before starting a major new subtask in an already-long session, or when a [context-health] hook line appears at CAUTION or above and the user has not been told yet. Also use it to install or repair the hooks (\"install context health\", \"set up the context meter\"), or to refresh its model research. Also covers the startup (initial) context: \"how big is my starting context\", \"what is in my initial context\", \"is the system prompt too big for this model\", when a [context-health baseline] hook line asks for an audit or warns, or to review the recorded startup sizes per platform. Works in Claude Code, Cowork, Copilot CLI, VS Code, Codex CLI, Gemini CLI, Cursor."
+description: "Check whether the current session's context is big enough to degrade the running model, and warn with effects plus one recommendation. Use when the user asks \"how big is this session\", \"context check\", \"are we near the limit\", \"should I start a new session\", \"is the context degrading\", when a session is visibly long (15+ substantial exchanges or several large file/research dumps), before starting a major new subtask in an already-long session, or when a [context-health] hook line appears at CAUTION or above and the user has not been told yet. Also use it to install or repair the hooks (\"install context health\", \"set up the context meter\"), or to refresh its model research. Also covers the startup (initial) context: \"how big is my starting context\", \"what is in my initial context\", \"is the system prompt too big for this model\", when a [context-health baseline] hook line asks for an audit or warns, or to review the recorded startup sizes per platform. Also \"do my skills overlap\" and [context-health selection] lines. Works in Claude Code, Cowork, Copilot CLI, VS Code, Codex CLI, Gemini CLI, Cursor."
 license: MIT
 metadata:
-  version: "1.3.2"
+  version: "1.4.0"
   evergreen: "fast tier; see MAINTENANCE.md"
 ---
 
@@ -80,12 +80,35 @@ oversized catalog makes rare skills silently uninvokable rather than merely expe
 re-injected after `/compact`, and `disable-model-invocation` skills never count. (The setting names
 `skillListingBudgetFraction` / `skillListingMaxDescChars` come from third-party guides, not the settings reference.)
 
-- `CTX selection` counts every skill visible to a session here (user root, plugin roots, this project's
-  `.claude/skills`), bands it (`models.json` `selection.counts`, default notable 25 / high 40 / excessive 60),
-  flags near-duplicate name families, lists descriptions over the listing cap, and warns when the catalog
-  exceeds the listing budget. `--list` shows every skill with its description size, `--json` for fields,
-  `--project PATH` to score another repo. `CTX status` prints the same lines under `startup:`.
-- The fix is scoping, not deletion: park out-of-scope skills **outside every skills root** (they stay readable
+- `CTX selection` counts every skill visible to a session here (user roots, the plugins Claude Code has
+  installed and enabled from `~/.claude/plugins/installed_plugins.json`, this project's `.claude/skills`;
+  `--agent claude` leaves out `~/.agents/skills`, which Claude Code does not read), bands it (`models.json`
+  `selection.counts`, notable 25 / high 40 / excessive 60, anchored on the accuracy curve in arXiv
+  2601.04748: above 90% to 20 skills, degrading past 30, routing needed by 60), and reports:
+  - **similar descriptions**: TF-IDF cosine between descriptions with skill and plugin name words removed.
+    0.45 is "possibly confusable", 0.65 "near-duplicate" (`selection.similarity`). Research finds overlap,
+    more than count, drives wrong and missed picks (competitors cost 7-63 points at a fixed size, 2601.04748;
+    shadowing is the main cause of the drop as libraries grow, 2605.24050; same-family siblings are the
+    documented risk, 2606.10388), so siblings are scored too. The thresholds are uncalibrated inference: no
+    study validates a lexical proxy. Treat a pair as a candidate to look at, not a verdict.
+  - **name clashes**: one normalised name with different descriptions in two places (2602.08004 found this
+    for 46% of marketplace skills);
+  - **description length**: over the Agent Skills spec's 1,024 characters (some agents drop it), over Claude
+    Code's 1,536-character cut, or 40 characters or fewer (too vague to select on);
+  - near-duplicate name families and the listing budget, as before.
+  `--list` shows every skill with its description size, `--json` for fields, `--project PATH` to score
+  another repo. `CTX status` prints the same lines under `startup:`.
+- **Automatic check**: the hook scans the catalog of the running agent once in the first session and then
+  every `selection.check_every` sessions (default 5). It stays silent when nothing is found, and when the same
+  findings were already reported within `selection.warn_days` (default 7). When it fires, the line starts
+  `[context-health selection]`: tell the user in one line after their task, once. Tune with
+  `CTX config set selection.check_every 5`, `selection.overlap 0.45`, `selection.warn_days 7`,
+  `selection.enabled false`.
+- Fixes for a similar pair, in order: merge or remove one of a near-duplicate; rewrite each description to
+  lead with its distinct trigger and say when not to use it; set a rarely used skill to
+  `disable-model-invocation`; group a large family behind one router skill (routing recovered 37-40 points
+  at 60+ skills in 2601.04748).
+- The fix for count is scoping, not deletion: park out-of-scope skills **outside every skills root** (they stay readable
   and can be junctioned back per-repo) and link them into the one repo that uses them via its
   `.claude/skills/`. Deleting loses the skill; parking only takes it out of the always-on catalog.
 - Bands are seeded from the tool-retrieval evidence (RESEARCH.md, Selection noise). Refreshes move

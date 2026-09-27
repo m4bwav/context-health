@@ -15,3 +15,6 @@ Append-only. One line per operation: `## [YYYY-MM-DD] op | title` where op is on
 ## [2026-09-26] update | CI: actions/checkout@v7 and actions/setup-python@v7 (node24; v4/v5 were Node 20 and forced onto 24 with a warning); Linux runners pinned to ubuntu-26.04 ahead of the ubuntu-latest move (actions/runner-images#14748, from 2026-10-19), except the Python 3.9 job, which stays on ubuntu-24.04 because actions/python-versions has no 3.9 build for 26.04
 ## [2026-09-26] handoff | current state brought to 1.3.2, CI v7/ubuntu-26.04, refresh next due 2026-09-29
 ## [2026-09-26] update | repository made public (gh repo edit --visibility public) after re-scanning every commit, files and messages, for the private strings listed in the vault sidecar note; only the intended author name and generic example paths matched
+## [2026-09-26] add | decision: Skill catalog check: TF-IDF description similarity every 5 sessions
+## [2026-09-26] update | v1.4.0: skill catalog check in the hook (first session, then every 5), TF-IDF description similarity with name words removed (0.45 / 0.65), name clashes, description length, installed plugins scanned, per-agent roots; research R-20260926-3 (2601.04748, 2605.24050, 2606.10388, ToolScope); C-20260926-2; unittest 47/47
+## [2026-09-26] index | rebuilt (3 entries)

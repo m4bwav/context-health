@@ -31,6 +31,7 @@ import datetime as _dt
 import fnmatch
 import glob
 import json
+import math
 import os
 import re
 import shutil
@@ -38,7 +39,7 @@ import sys
 import time
 import zipfile
 
-VERSION = "1.3.2"
+VERSION = "1.4.0"
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = HERE
 MODELS_PATH = os.path.join(HERE, "models.json")
@@ -936,12 +937,52 @@ def describe_baseline(models, cfg, m, path, agent, harness, model=None):
 # catalog grows and as entries become near-duplicates of each other (models.json "selection" carries the
 # evidence). Counted from disk, because the catalog is not recoverable from a transcript.
 
-SKILL_GLOBS = [
-    os.path.join(HOME, ".claude", "skills", "*", "SKILL.md"),
-    os.path.join(HOME, ".claude", "plugins", "*", "skills", "*", "SKILL.md"),
-    os.path.join(HOME, ".claude", "plugins", "*", "*", "skills", "*", "SKILL.md"),
-    os.path.join(HOME, ".agents", "skills", "*", "SKILL.md"),
-]
+def skills_home():
+    return os.environ.get("CTXHEALTH_SKILLS_HOME") or HOME  # tests point this at an empty folder
+
+
+CLAUDE_AGENTS = ("claude", "vscode")
+
+
+def skill_globs(agent="all"):
+    """User-level skill roots. Claude Code reads ~/.claude only; the shared ~/.agents root serves Codex,
+    Copilot CLI, Cursor and Gemini, so it counts for them and for the agent-agnostic default."""
+    h = skills_home()
+    out = [
+        os.path.join(h, ".claude", "skills", "*", "SKILL.md"),
+        os.path.join(h, ".claude", "plugins", "*", "skills", "*", "SKILL.md"),
+        os.path.join(h, ".claude", "plugins", "*", "*", "skills", "*", "SKILL.md"),
+    ]
+    if agent not in CLAUDE_AGENTS:
+        out.append(os.path.join(h, ".agents", "skills", "*", "SKILL.md"))
+    return out
+
+
+def _norm_dir(p):
+    return os.path.normcase(os.path.normpath(os.path.abspath(p))) if p else ""
+
+
+def installed_plugin_skill_globs(project=None):
+    """Claude Code keeps installed plugins under plugins/cache/<marketplace>/<plugin>/<version>, which the
+    fixed globs do not reach: read installed_plugins.json (version 2 shape) for the install paths, keep
+    user-scope entries and project-scope entries for this project, and skip plugins settings.json disables."""
+    h = skills_home()
+    reg = read_json(os.path.join(h, ".claude", "plugins", "installed_plugins.json"), {}) or {}
+    enabled = (read_json(os.path.join(h, ".claude", "settings.json"), {}) or {}).get("enabledPlugins") or {}
+    proj = _norm_dir(project)
+    out = []
+    plugins = reg.get("plugins") if isinstance(reg.get("plugins"), dict) else {}
+    for key, entries in plugins.items():
+        if enabled.get(key) is False:
+            continue
+        for e in entries if isinstance(entries, list) else []:
+            if not isinstance(e, dict) or not e.get("installPath"):
+                continue
+            pp = _norm_dir(e.get("projectPath"))
+            if e.get("scope") in ("project", "local") and not (proj and (proj == pp or proj.startswith(pp + os.sep))):
+                continue
+            out.append((key.split("@")[0], os.path.join(e["installPath"], "skills", "*", "SKILL.md")))
+    return out
 
 
 def _skill_desc(path):
@@ -952,31 +993,64 @@ def _skill_desc(path):
         head = head_text(path, 8192)
     except Exception:
         return name, desc
-    for line in head.splitlines()[:40]:
+    lines = head.splitlines()[:80]
+    for i, line in enumerate(lines):
         s = line.strip().lstrip("﻿")
         if s.startswith("description:"):
-            desc = s.split(":", 1)[1].strip().strip("'\"")
+            desc = s.split(":", 1)[1].strip()
+            if desc in ("", ">", ">-", "|", "|-", ">+", "|+"):  # YAML block scalar: the indented lines that follow
+                more = []
+                for nxt in lines[i + 1:]:
+                    if nxt.strip() and not nxt[:1].isspace():
+                        break
+                    more.append(nxt.strip())
+                desc = " ".join(x for x in more if x)
+            desc = desc.strip("'\"")
         elif s.startswith("name:"):
             name = s.split(":", 1)[1].strip().strip("'\"") or name
     return name, desc
 
 
-def scan_skills(project=None):
-    """Every skill visible to a session here: user root, plugin roots, and this project's .claude/skills."""
-    globs = list(SKILL_GLOBS)
+def scan_skills(project=None, agent="all"):
+    """Every skill visible to a session here: user roots, installed plugins, and this project's .claude/skills.
+    The same file reached twice (a junction, a link) counts once; the same name from two roots with the
+    same description is a mirror and counts once; the same name with different descriptions is a clash."""
+    globs = [(None, g) for g in skill_globs(agent)] + installed_plugin_skill_globs(project)
     if project:
-        globs.append(os.path.join(project, ".claude", "skills", "*", "SKILL.md"))
+        globs.append((None, os.path.join(project, ".claude", "skills", "*", "SKILL.md")))
     seen, out = set(), []
-    for g in globs:
-        for f in glob.glob(g):
+    for plugin, g in globs:
+        for f in sorted(glob.glob(g)):
             rp = os.path.realpath(f)
             if rp in seen:
                 continue
             seen.add(rp)
             name, desc = _skill_desc(f)
-            out.append({"name": name, "desc": desc, "chars": len(name) + len(desc), "path": f})
-    out.sort(key=lambda s: s["name"])
+            out.append({"name": name, "desc": desc, "chars": len(name) + len(desc), "path": f, "plugin": plugin})
+    out.sort(key=lambda s: (s["name"], s["plugin"] or ""))
     return out
+
+
+def _norm_name(name):
+    return re.sub(r"[^a-z0-9]", "", name.split(":")[-1].lower())
+
+
+def _dedupe(skills):
+    """(unique skills, clashes). A name with the same description in two places is one skill mirrored
+    (a plugin and a linked copy) and counts once. One normalised name with different descriptions in two
+    places is a clash: the model sees two entries that answer to the same name (plugin namespacing does
+    not help it choose). Marketplace data has this for 46% of skills (arXiv 2602.08004)."""
+    mirrors, names, clashes, uniq = set(), {}, set(), []
+    for s in skills:
+        if (s["name"], s["desc"]) in mirrors:
+            continue
+        mirrors.add((s["name"], s["desc"]))
+        nn = _norm_name(s["name"])
+        if nn in names:
+            clashes.add(s["name"])
+        names[nn] = s
+        uniq.append(s)
+    return uniq, sorted(clashes)
 
 
 def _clusters(skills, cluster_min):
@@ -989,23 +1063,108 @@ def _clusters(skills, cluster_min):
                   key=lambda kv: -len(kv[1]))
 
 
-def evaluate_selection(models, cfg, project=None, skills=None):
+# Words every trigger description shares; they say nothing about which skill a prompt wants.
+_STOP = set((
+    "about also always another anything asks based before being between both called check create does "
+    "done each every file files from have into itself just like made make more must need needs only other "
+    "over same says should skill skills some something such than that their them then there these they "
+    "this those through under used user uses using want wants what when whenever where whether which while "
+    "with without work would your refresh stale whole the and for not use any are can how its one "
+    "said phrases trigger triggers including even").split())
+_SUFFIXES = ("ings", "ing", "ies", "ers", "ed", "es", "er", "s")
+
+
+def _stem(w):
+    for suf in _SUFFIXES:
+        if len(w) > len(suf) + 3 and w.endswith(suf):
+            return w[:-len(suf)]
+    return w
+
+
+def _tokens(text, drop):
+    return [_stem(w) for w in re.findall(r"[a-z][a-z0-9]+", (text or "").lower())
+            if len(w) >= 3 and w not in _STOP and w not in drop]
+
+
+def similar_pairs(skills, possible=0.45, limit=10):
+    """Pairs of skills whose descriptions compete for the same prompts, by TF-IDF cosine over the
+    description words, smoothed IDF over the installed catalog so words many skills share weigh less.
+    Words of any skill or plugin name are removed first: a family label (acme-*) or a description
+    naming its sibling is a label, not trigger text. Sibling pairs are kept, because same-family
+    siblings are the documented risk (arXiv 2606.10388) and competitors cost 7-63 points of selection
+    accuracy at a fixed catalog size (arXiv 2601.04748). No study validates a lexical threshold: 0.45
+    ("possibly confusable") and 0.65 ("near-duplicate") are set below the 0.77-0.82 embedding-cosine
+    band ToolScope (arXiv 2510.20036) uses for merge candidates, because lexical cosine runs lower for
+    the same pair. Returns [(score, a, b)] sorted high to low; one pass of sparse dot products."""
+    drop = set()
+    for s in skills:
+        drop.update(w for w in re.split(r"[-_:]", s["name"].lower()) if w)
+        if s.get("plugin"):
+            drop.update(w for w in re.split(r"[-_]", s["plugin"].lower()) if w)
+    docs = [_tokens(s["desc"], drop) for s in skills]
+    n = len(docs)
+    df = {}
+    for d in docs:
+        for w in set(d):
+            df[w] = df.get(w, 0) + 1
+    vecs = []
+    for d in docs:
+        tf = {}
+        for w in d:
+            tf[w] = tf.get(w, 0) + 1
+        v = dict((w, c * (math.log((1.0 + n) / (1.0 + df[w])) + 1.0)) for w, c in tf.items())  # smoothed IDF
+        norm = math.sqrt(sum(x * x for x in v.values()))
+        vecs.append(dict((w, x / norm) for w, x in v.items()) if norm else {})
+    out = []
+    for i in range(n):
+        if len(vecs[i]) < 4:
+            continue
+        for j in range(i + 1, n):
+            if len(vecs[j]) < 4 or _norm_name(skills[i]["name"]) == _norm_name(skills[j]["name"]):
+                continue  # same name is reported as a clash
+            a, bb = (vecs[i], vecs[j]) if len(vecs[i]) <= len(vecs[j]) else (vecs[j], vecs[i])
+            score = sum(x * bb.get(w, 0.0) for w, x in a.items())
+            if score >= possible:
+                out.append((round(score, 2), skills[i]["name"], skills[j]["name"]))
+    out.sort(key=lambda t: (-t[0], t[1], t[2]))
+    return out[:limit]
+
+
+def evaluate_selection(models, cfg, project=None, skills=None, agent="all"):
     sel = models.get("selection") or {}
+    scfg = cfg.get("selection") if isinstance(cfg.get("selection"), dict) else {}
     counts = sel.get("counts") or [25, 40, 60]
-    over = int((cfg.get("selection") or {}).get("counts_override") or 0)
+    over = int(scfg.get("counts_override") or 0)
     if over:
         counts = [over, int(over * 1.6), int(over * 2.4)]
-    skills = scan_skills(project) if skills is None else skills
+    skills = scan_skills(project, agent) if skills is None else skills
+    skills, clashes = _dedupe(skills)
     n = len(skills)
     band = sum(1 for t in counts if n >= t)
     name = ["ok", "notable", "high", "excessive"][band]
     chars = sum(s["chars"] for s in skills)
     cap = int(sel.get("desc_chars_max") or 1536)
+    simc = sel.get("similarity") or {}
+    try:
+        thr = float(scfg.get("overlap") or simc.get("possible") or 0.45)
+        near = float(simc.get("near_duplicate") or 0.65)
+    except (TypeError, ValueError):
+        thr, near = 0.45, 0.65
+    spec_max = int(sel.get("desc_chars_spec") or 1024)
+    vague = int(sel.get("desc_chars_vague") or 40)
+    pairs = similar_pairs(skills, thr)
     return {
-        "count": n, "band_name": name, "thresholds": counts,
+        "count": n, "band": band, "band_name": name, "thresholds": counts,
         "catalog_tokens": int(chars / 4), "catalog_chars": chars,
         "over_cap": [s["name"] for s in skills if s["chars"] > cap],
+        "over_spec": [s["name"] for s in skills if len(s["desc"]) > spec_max],
+        "vague": [s["name"] for s in skills if len(s["desc"]) <= vague],
         "clusters": _clusters(skills, int(sel.get("cluster_min") or 3)),
+        "overlaps": pairs,
+        "near_duplicates": [p_ for p_ in pairs if p_[0] >= near],
+        "overlap_threshold": thr, "near_threshold": near,
+        "clashes": clashes,
+        "plugins": sorted(set(s["plugin"] for s in skills if s["plugin"])),
         "listing_budget_fraction": sel.get("listing_budget_fraction"),
     }
 
@@ -1024,6 +1183,15 @@ def describe_selection(models, cfg, ev, budget_tokens=None):
     if ev["clusters"]:
         lines.append("near-duplicate families (compete for the same prompts): " + "; ".join(
             "%s x%d" % (stem, len(names)) for stem, names in ev["clusters"][:4]))
+    if ev.get("overlaps"):
+        lines.append("similar descriptions (TF-IDF cosine >= %.2f possibly confusable, >= %.2f near-duplicate): %s" % (
+            ev["overlap_threshold"], ev["near_threshold"], "; ".join("%s ~ %s %.2f%s" % (a, b, sc, " NEAR-DUPLICATE" if sc >= ev["near_threshold"] else "") for sc, a, b in ev["overlaps"][:5])))
+    if ev.get("clashes"):
+        lines.append("same name, different descriptions in two places (the model sees two entries for one name): " + ", ".join(ev["clashes"][:5]))
+    if ev.get("over_spec"):
+        lines.append("descriptions over the Agent Skills spec's 1,024 characters (some agents drop them): " + ", ".join(ev["over_spec"][:5]))
+    if ev.get("vague"):
+        lines.append("descriptions of 40 characters or fewer (too vague to select on): " + ", ".join(ev["vague"][:5]))
     if ev["over_cap"]:
         lines.append("descriptions over the %d-char listing cap (truncated in the catalog): %s" % (
             int((models.get("selection") or {}).get("desc_chars_max") or 1536), ", ".join(ev["over_cap"][:5])))
@@ -1036,11 +1204,101 @@ def describe_selection(models, cfg, ev, budget_tokens=None):
     return lines
 
 
+def selection_cfg(cfg):
+    out = {"enabled": True, "check_every": 5, "warn_days": 7}
+    s = cfg.get("selection") if isinstance(cfg.get("selection"), dict) else {}
+    out.update({kk: v for kk, v in s.items() if kk in out})
+    return out
+
+
+def _selection_sig(ev):
+    return "%s|%s|%s" % (ev["band_name"], ",".join("%s~%s" % (a, b) for _, a, b in ev["overlaps"]), ",".join(ev["clashes"]))
+
+
+def selection_step(models, cfg, agent, session_id, data, harness_window=None):
+    """Once per session, every selection.check_every sessions (default 5, the first one included): scan the
+    skill catalog this agent loads and report overlapping descriptions, name clashes and the count band.
+    Silent when nothing is found, and when the same findings were already reported within warn_days.
+    Returns (model_text, user_text). Cost: one glob pass and an 8 KB head read per SKILL.md."""
+    sc = selection_cfg(cfg)
+    if not sc.get("enabled", True):
+        return None, None
+    sp = state_path(agent, session_id)
+    st = read_json(sp, {}) or {}
+    if st.get("selection_done"):
+        return None, None
+    st["selection_done"] = True
+    try:
+        write_json(sp, st)
+    except Exception as e:
+        dbg("state write failed: %r" % e)
+    mp = os.path.join(CFG_DIR, "selection.json")
+    meta = read_json(mp, {}) or {}
+    n = int(meta.get("sessions", 0)) + 1
+    meta["sessions"] = n
+    try:
+        every = max(1, int(sc.get("check_every") or 5))
+    except (TypeError, ValueError):
+        every = 5
+    last = int(meta.get("last_check_session", 0))
+    if last and n - last < every:
+        write_json(mp, meta)
+        return None, None
+    project = str(data.get("cwd") or "") or None
+    ev = evaluate_selection(models, cfg, project, agent=agent)
+    meta.update({"last_check_session": n, "last_check_date": today(), "count": ev["count"], "band": ev["band_name"],
+                 "overlaps": [[a, b, sc_] for sc_, a, b in ev["overlaps"]], "clashes": ev["clashes"]})
+    found = ev["band"] >= 2 or ev["overlaps"] or ev["clashes"] or ev["over_cap"]
+    sig = _selection_sig(ev)
+    try:
+        warn_days = float(sc.get("warn_days", 7))
+    except (TypeError, ValueError):
+        warn_days = 7.0
+    fresh = sig != meta.get("warned_sig") or time.time() - float(meta.get("warned_t", 0)) >= warn_days * 86400
+    emit = bool(found and fresh)
+    if emit:
+        meta["warned_sig"], meta["warned_t"] = sig, time.time()
+    try:
+        write_json(mp, meta)
+    except Exception as e:
+        dbg("selection meta write failed: %r" % e)
+    if not emit:
+        return None, None
+    bt = selection_band_text(models, ev["band_name"])
+    head = "[context-health selection] Skill catalog check (every %d sessions): %d skills visible to this agent, ~%s tokens of descriptions - %s" % (
+        every, ev["count"], k(ev["catalog_tokens"]), bt["label"])
+    parts = [head + "."]
+    short = []
+    if ev["overlaps"]:
+        pairs = ", ".join("%s ~ %s %.2f%s" % (a, b, s_, " (near-duplicate)" if s_ >= ev["near_threshold"] else "") for s_, a, b in ev["overlaps"][:4])
+        parts.append("Closest descriptions (TF-IDF cosine; research finds overlapping skills, more than raw count, cause wrong or missed picks): %s." % pairs)
+        short.append("%d similar pair%s (%s)" % (len(ev["overlaps"]), "" if len(ev["overlaps"]) == 1 else "s",
+                                                ", ".join("%s ~ %s" % (a, b) for _, a, b in ev["overlaps"][:2])))
+    if ev["clashes"]:
+        parts.append("Same skill name with different descriptions in two places: %s." % ", ".join(ev["clashes"][:4]))
+        short.append("name clash: %s" % ", ".join(ev["clashes"][:3]))
+    if ev["over_cap"]:
+        parts.append("Descriptions Claude Code truncates at 1,536 characters: %s." % ", ".join(ev["over_cap"][:4]))
+    budget = (harness_window or 0) * ((models.get("selection") or {}).get("listing_budget_fraction") or 0.01)
+    if budget and ev["catalog_tokens"] > budget:
+        parts.append("The catalog is over Claude Code's listing budget (~%s): least-invoked descriptions are dropped." % k(int(budget)))
+    if ev["band"] >= 2 and bt.get("advice"):
+        parts.append("Recommendation: %s." % bt["advice"])
+    elif ev["overlaps"] or ev["clashes"]:
+        parts.append("Recommendation: merge or remove one of each near-duplicate; otherwise rewrite each description to lead with its distinct trigger and say when not to use it, set rarely used skills to disable-model-invocation, or group a family behind one router skill.")
+    parts.append("Tell the user in one line after their task, once; `ctxhealth.py selection` prints the detail.")
+    if ev["band"] >= 2:
+        short.insert(0, "%d skills (%s; selection gets less reliable past about 20-30)" % (ev["count"], bt["label"]))
+    user = "Context-health: skill catalog check - " + "; ".join(short) if short else None
+    return " ".join(parts), user
+
+
 def cmd_selection(a):
     models = load_models()
     cfg = load_cfg()
     project = a.project or os.getcwd()
-    skills = scan_skills(project)
+    agent = getattr(a, "agent", None) or "all"
+    skills = scan_skills(project, agent)
     ev = evaluate_selection(models, cfg, project, skills)
     if a.json:
         ev["skills"] = [{"name": s["name"], "chars": s["chars"], "path": s["path"]} for s in skills]
@@ -1225,7 +1483,13 @@ def cmd_hook(a):
         b_model, b_user = (None, None)
         if path and os.path.exists(winpath(path)):
             b_model, b_user = baseline_step(models, cfg, agent, harness, session_id, path, data, kind, model, window_hint)
-        if not live and not b_model:
+        s_model, s_user = (None, None)
+        if event != "preCompact":
+            try:
+                s_model, s_user = selection_step(models, cfg, agent, session_id, data, ev.get("harness_window"))
+            except Exception as e:
+                dbg("selection step failed: %r" % e)
+        if not live and not b_model and not s_model:
             return 0
         m_parts = []
         u_parts = []
@@ -1237,6 +1501,10 @@ def cmd_hook(a):
             m_parts.append(b_model)
         if b_user:
             u_parts.append(b_user)
+        if s_model:
+            m_parts.append(s_model)
+        if s_user:
+            u_parts.append(s_user)
         m_text = "\n".join(m_parts)
         u_text = "\n".join(u_parts)
         if agent == "copilot":
@@ -1338,12 +1606,12 @@ def cmd_status(a):
         if first:
             out["startup"] = evaluate_baseline(models, cfg, first["startup"], a.model or first.get("model"), ev["harness"], path, first.get("window_hint"))
             out["startup"].update({"platform": platform_for(agent, path, first.get("kind")), "first_turn": first["tokens"], "prompt_est": first.get("prompt_tokens_est", 0)})
-        out["selection"] = evaluate_selection(models, cfg, os.getcwd())
+        out["selection"] = evaluate_selection(models, cfg, os.getcwd(), agent=agent)
         print(json.dumps(out, indent=2))
     else:
         print(describe(models, m, ev, agent))
         print("\n".join(describe_baseline(models, cfg, first, path, agent, ev["harness"], a.model)))
-        sev = evaluate_selection(models, cfg, os.getcwd())
+        sev = evaluate_selection(models, cfg, os.getcwd(), agent=agent)
         budget = (ev.get("harness_window") or 0) * (((models.get("selection") or {}).get("listing_budget_fraction")) or 0.01)
         print("\n".join(describe_selection(models, cfg, sev, budget)))
     return 0
@@ -1415,8 +1683,17 @@ def cmd_config(a):
             if not ok:
                 print("usage: config set baseline.enabled true|false | baseline.audit_every <n> | baseline.min_band %s | baseline.jump <fraction> | baseline.warn_days <days>" % "|".join(BASELINE_BANDS[1:]))
                 return 2
+        elif keys[0] == "selection":
+            ok = len(keys) == 2 and (
+                (keys[1] == "enabled" and isinstance(val, bool))
+                or (keys[1] in ("check_every", "counts_override") and isinstance(val, int) and not isinstance(val, bool) and val > 0)
+                or (keys[1] == "overlap" and isinstance(val, (int, float)) and not isinstance(val, bool) and 0 < val < 1)
+                or (keys[1] == "warn_days" and isinstance(val, (int, float)) and not isinstance(val, bool) and val >= 0))
+            if not ok:
+                print("usage: config set selection.enabled true|false | selection.check_every <n> | selection.overlap <0-1> | selection.warn_days <days> | selection.counts_override <n>")
+                return 2
         elif keys[0] not in ("profile", "min_band", "windows", "cooldown_scale") or (keys[0] != "windows" and len(keys) != 1):
-            print("unknown key %s; keys: profile, min_band, windows.<harness>, cooldown_scale, baseline.<enabled|audit_every|min_band|jump|warn_days>" % a.key)
+            print("unknown key %s; keys: profile, min_band, windows.<harness>, cooldown_scale, baseline.<enabled|audit_every|min_band|jump|warn_days>, selection.<enabled|check_every|overlap|warn_days|counts_override>" % a.key)
             return 2
         node = cfg
         for kk in keys[:-1]:
@@ -1434,7 +1711,7 @@ def cmd_config(a):
         print(json.dumps(node))
         return 0
     print(json.dumps(cfg, indent=2))
-    print("keys: profile (balanced|conservative|relaxed), min_band (watch|caution|warning), windows.<harness> (token cap, e.g. windows.copilot 1000000), cooldown_scale, baseline.enabled, baseline.audit_every (default 10), baseline.min_band (notable|high|excessive), baseline.jump (default 0.25), baseline.warn_days (default 7)")
+    print("keys: profile (balanced|conservative|relaxed), min_band (watch|caution|warning), windows.<harness> (token cap, e.g. windows.copilot 1000000), cooldown_scale, baseline.enabled, baseline.audit_every (default 10), baseline.min_band (notable|high|excessive), baseline.jump (default 0.25), baseline.warn_days (default 7), selection.enabled, selection.check_every (default 5), selection.overlap (default 0.45), selection.warn_days (default 7), selection.counts_override")
     return 0
 
 
@@ -1939,6 +2216,7 @@ def main(argv=None):
     s = sp.add_parser("selection", help="selection noise: how many skills compete for the model's choice")
     s.add_argument("--project", help="project root whose .claude/skills also counts (default: cwd)")
     s.add_argument("--list", action="store_true", help="list every visible skill with its description size")
+    s.add_argument("--agent", default="all", help="claude|vscode counts only the roots Claude Code reads; any other value adds ~/.agents/skills (default all)")
     s.add_argument("--json", action="store_true")
     s.set_defaults(fn=cmd_selection)
 
