@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20260926-3 · 2026-09-26 · Description under the spec's 1,024-character cap, with a boundary sentence (v1.4.1)
+- because: user request (the description was 1,112 characters, over the Agent Skills spec limit that some hosts enforce by dropping the skill)
+- files: SKILL.md (description; metadata version), ctxhealth.py (VERSION), models.json and evergreen.json (version), ../../plugin.json and ../../.claude-plugin/plugin.json (1.4.1)
+- Now 1,015 characters. Every quoted trigger, the three hook lines ([context-health], [context-health baseline], [context-health selection]), install and repair, research refresh and the host list are kept; the four uses are grouped (session size, startup context, skill overlap, hooks) and a closing sentence says the skill measures and never edits skills.
+
 ### C-20260926-2 · 2026-09-26 · Skill catalog check every few sessions, research-based similarity, installed plugins scanned (v1.4.0)
 - because: user request (check a fresh session for skill conflicts, lightly, every few sessions, based on the latest research); R-20260926-3
 - files: ctxhealth.py (skill_globs per agent, installed_plugin_skill_globs, _skill_desc reads YAML block scalars, _dedupe with normalised-name clashes, similar_pairs TF-IDF cosine, evaluate_selection length checks, describe_selection, selection_cfg, selection_step wired into cmd_hook, `selection --agent`, config keys selection.*; VERSION), models.json (selection.similarity, desc_chars_spec, desc_chars_vague, counts `_about` anchors; version), SKILL.md (description; Selection noise), ../../tests/test_ctxhealth.py (TestSelection, four tests; Base points CTXHEALTH_SKILLS_HOME at an empty folder), RESEARCH.md (R-20260926-3; Selection noise), evergreen.json (volatile claim, counts, version), ../../plugin.json and ../../.claude-plugin/plugin.json (1.4.0), ../../README.md

@@ -18,3 +18,4 @@ Append-only. One line per operation: `## [YYYY-MM-DD] op | title` where op is on
 ## [2026-09-26] add | decision: Skill catalog check: TF-IDF description similarity every 5 sessions
 ## [2026-09-26] update | v1.4.0: skill catalog check in the hook (first session, then every 5), TF-IDF description similarity with name words removed (0.45 / 0.65), name clashes, description length, installed plugins scanned, per-agent roots; research R-20260926-3 (2601.04748, 2605.24050, 2606.10388, ToolScope); C-20260926-2; unittest 47/47
 ## [2026-09-26] index | rebuilt (3 entries)
+## [2026-09-26] update | v1.4.1: SKILL.md description 1,112 -> 1,015 chars (spec cap 1,024) with a closing boundary sentence, every trigger and hook line kept (skill-tidy check OK); C-20260926-3; unittest 47/47
