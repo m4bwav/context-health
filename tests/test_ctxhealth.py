@@ -65,7 +65,7 @@ class TestModels(Base):
             "gpt-5.5": ("gpt-5.5", 1050000), "gpt-5.5-codex": ("gpt-5.5", 1050000), "gpt-5.4": ("gpt-5.4", 256000),
             "gpt-5.3-codex": ("gpt-5-400k", 400000), "gpt-5.6-sol": ("gpt-5.6", 272000), "gpt-6-astra": ("gpt-6-astra", 1000000), "gpt-6-sol": ("gpt-6-sol-luna", 922000), "gpt-6-luna": ("gpt-6-sol-luna", 922000), "gpt-4.1": ("gpt-4.1", 1047576),
             "o3": ("openai-legacy", 200000), "gemini-3.1-pro-preview": ("gemini-1m", 1048576), "gemini-3-flash-preview": ("gemini-1m", 1048576),
-            "grok-code-fast-1": ("grok", 256000), "grok-4.5": ("grok-4.5", 500000), "kimi-k3": ("unknown", 200000), "": ("unknown", 200000),
+            "grok-code-fast-1": ("grok", 256000), "grok-4.5": ("grok-4.5", 500000), "grok-4.7": ("grok-4.5", 500000), "claude-sonnet-5-5": ("claude-1m", 1000000), "kimi-k3": ("unknown", 200000), "": ("unknown", 200000),
         }
         for mid, (fid, win) in cases.items():
             fam, norm, one_m = ch.find_family(self.models, mid)

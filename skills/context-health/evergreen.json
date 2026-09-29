@@ -15,9 +15,9 @@
   "topic": "LLM context windows and long-context degradation (context rot, MRCR, needle benchmarks) for current Claude, GPT, Gemini and Grok models; per-harness context caps and auto-compaction thresholds; hook and transcript formats of Claude Code, Cowork, Copilot CLI, VS Code agent hooks, Codex CLI, Gemini CLI and Cursor; startup (initial) context size per model and platform: how much system prompt, tool schema and instruction-file prefix a model tolerates before performance drops, and the typical host prefix of each agent",
   "tier": "fast",
   "interval_days": 3,
-  "last_checked": "2026-09-26",
-  "next_due": "2026-09-29",
-  "verify_at_use": false,
+  "last_checked": "2026-09-29",
+  "next_due": null,
+  "verify_at_use": true,
   "volatile_claims": [
     "Copilot per-model context caps and the 1M opt-in",
     "Codex CLI effective window for GPT-5.5 (400K cap, reported 258K-353K effective)",
@@ -38,7 +38,7 @@
   ],
   "streak": {
     "quiet": 0,
-    "pinned_min": 2,
+    "pinned_min": 0,
     "pinned_max": 0,
     "vau_quiet": 0
   },
@@ -66,13 +66,19 @@
       "m": 0.45,
       "interval_after": 3,
       "note": "Codex GPT-6 Sol 272K cap, Sol primary source, MCP instructions in /context, plugin eval limits; cost: searches 18 · fetches 22 · tool calls 50"
+    },
+    {
+      "date": "2026-09-29",
+      "m": 0.35,
+      "interval_after": null,
+      "note": "Grok 4.7 to the 500K family, Sonnet 5.5 and the sonnet alias by provider, contextburn cost U-curve noted; unittest 47 OK; cost: searches 16 · fetches 25 · tool calls 47"
     }
   ],
   "counts": {
     "learnings": 10,
     "changes": 8,
-    "research": 13
+    "research": 14
   },
   "consolidate_every": 25,
-  "version": "1.4.1"
+  "version": "1.4.2"
 }

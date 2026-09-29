@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20260929-1 · 2026-09-29 · Grok 4.7 joins the 500K family; Sonnet 5.5 and the provider-dependent `sonnet` alias noted (v1.4.2)
+- because: R-20260929-1, R-20260929-2
+- files: models.json (families grok-4.5 label, match and note; claude-1m note; checked dates; last_checked), tests/test_ctxhealth.py (test_families: grok-4.7, claude-sonnet-5-5), version 1.4.2 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
+- `grok-4.7` resolved to the 256K catch-all and now matches the 500K family (the new test case fails without the fix); Sonnet 5.5 already matched claude-sonnet-5*, and the note now warns that the bare `sonnet` alias is a 200K model on Bedrock, Google Cloud and Foundry.
+
 ### C-20260926-3 · 2026-09-26 · Description under the spec's 1,024-character cap, with a boundary sentence (v1.4.1)
 - because: user request (the description was 1,112 characters, over the Agent Skills spec limit that some hosts enforce by dropping the skill)
 - files: SKILL.md (description; metadata version), ctxhealth.py (VERSION), models.json and evergreen.json (version), ../../plugin.json and ../../.claude-plugin/plugin.json (1.4.1)

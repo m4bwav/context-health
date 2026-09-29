@@ -1,6 +1,6 @@
 {
-  "version": "1.4.1",
-  "last_checked": "2026-09-22",
+  "version": "1.4.2",
+  "last_checked": "2026-09-29",
   "_about": "Per-model context windows and degradation bands used by ctxhealth.py. Bands are research-derived ESTIMATES of a gradual gradient, not cliffs (Chroma Context Rot 2025; Anthropic 'gradient not cliff' guidance). Evidence and search plan: RESEARCH.md. Edit families/match to add a model; never hand-edit thresholds without logging a C- entry in CHANGELOG.md.",
   "profiles": {
     "_about": "Fractions of the model's NATIVE window at which each band starts: [watch, caution, warning, critical]. Keyed by model class. 'balanced' is the default; 'conservative' reproduces the original 2026-08-29 absolute bands for 1M models (100K/200K/400K/600K); 'relaxed' follows the later evidence (Verdent: onset ~400K, unreliable past ~600K on Sonnet 4.6; Opus 4.6 MRCR 93% at 256K -> 76% at 1M).",
@@ -106,7 +106,7 @@
       "window": 1000000,
       "max_output": 128000,
       "class": "1m",
-      "checked": "2026-09-22",
+      "checked": "2026-09-29",
       "match": [
         "claude-fable-5*",
         "fable-5*",
@@ -133,7 +133,7 @@
         "sonnet-4.6*",
         "claude-mythos-preview*"
       ],
-      "note": "Fable 5.1 / Mythos 5.1 / Opus 5.5 / Opus 5 / Sonnet 5 / Opus 4.6-4.8 / Sonnet 4.6: 1M input, 128K output (300K output on the Batch API with a beta header). Opus 5.5 (claude-opus-5-5, released 2026-09-22) matches claude-opus-5*; 1M on every Claude Code plan (Opus 4.7 and later) and the `opus` alias and `default` model since Claude Code v2.1.280. Its thinking is always on and it thinks more per turn than Opus 5 at the same effort (most at xhigh/max), so on long tool loops context grows faster per turn; the Claude Code default effort is medium. No independent long-context benchmark published for the 5.x models yet (the Opus 5.5 system card gives only ProgramBench, an agentic benchmark with episodes up to 1M: 91.2% vs Opus 5 85.4%, not split by length); bands come from Opus 4.6 MRCR (93% at 256K, 76% at 1M) and Sonnet 4.6 field reports (onset ~400K, unreliable past ~600K). Claude Code: auto-compact at roughly window minus ~33K (Sonnet 5 documented ~967K); CLAUDE_CODE_DISABLE_1M_CONTEXT=1 caps at 200K."
+      "note": "Fable 5.1 / Mythos 5.1 / Opus 5.5 / Opus 5 / Sonnet 5 / Opus 4.6-4.8 / Sonnet 4.6: 1M input, 128K output (300K output on the Batch API with a beta header). Opus 5.5 (claude-opus-5-5, released 2026-09-22) matches claude-opus-5*; 1M on every Claude Code plan (Opus 4.7 and later) and the `opus` alias and `default` model since Claude Code v2.1.280. Its thinking is always on and it thinks more per turn than Opus 5 at the same effort (most at xhigh/max), so on long tool loops context grows faster per turn; the Claude Code default effort is medium. No independent long-context benchmark published for the 5.x models yet (the Opus 5.5 system card gives only ProgramBench, an agentic benchmark with episodes up to 1M: 91.2% vs Opus 5 85.4%, not split by length); bands come from Opus 4.6 MRCR (93% at 256K, 76% at 1M) and Sonnet 4.6 field reports (onset ~400K, unreliable past ~600K). Claude Code: auto-compact at roughly window minus ~33K (Sonnet 5 documented ~967K); CLAUDE_CODE_DISABLE_1M_CONTEXT=1 caps at 200K. Sonnet 5.5 (claude-sonnet-5-5, released 2026-09-28) matches claude-sonnet-5*: 1M input, 128K output, adaptive thinking on by default, the default Sonnet in Claude Code 2.1.284 (native 1M, auto-compact about 967K); no long-context benchmark yet. The bare `sonnet` alias is Sonnet 5.5 only on the Anthropic API: it is Sonnet 4.6 (1M) on Claude Platform on AWS and Sonnet 4.5 (200K) on Bedrock, Google Cloud and Foundry, where this match overstates the window; pin `windows.<agent>` there."
     },
     {
       "id": "claude-200k",
@@ -299,16 +299,18 @@
     },
     {
       "id": "grok-4.5",
-      "label": "Grok 4.5 (500K)",
+      "label": "Grok 4.5 / 4.7 (500K)",
       "window": 500000,
       "max_output": 128000,
       "class": "400k",
-      "checked": "2026-09-02",
+      "checked": "2026-09-29",
       "match": [
         "grok-4.5*",
-        "grok-4-5*"
+        "grok-4-5*",
+        "grok-4.7*",
+        "grok-4-7*"
       ],
-      "note": "Added to Copilot 2026-07-28 with up to 500K context."
+      "note": "Added to Copilot 2026-07-28 with up to 500K context. Grok 4.7 (xAI release notes 2026-09-21; GA in Copilot): 500K context, effort low/medium/high (default)/xhigh."
     },
     {
       "id": "grok",
