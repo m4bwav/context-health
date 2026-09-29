@@ -19,14 +19,38 @@
   "next_due": null,
   "verify_at_use": true,
   "volatile_claims": [
-    "Copilot per-model context caps and the 1M opt-in",
-    "Codex CLI effective window for GPT-5.5 (400K cap, reported 258K-353K effective)",
-    "Copilot CLI events.jsonl usage record shape (not a stable API)",
-    "Startup-context bands (models.json baseline.fractions, 10/20/30% of the effective window) are judgment estimates seeded 2026-09-05 pending evidence",
-    "CLAUDE_CODE_ENTRYPOINT=claude-vscode as the VS Code extension marker (L-008)",
-    "GPT-6 Sol / Luna windows (1.05M / 922K input from secondary sources; openai.com returns 403)",
-    "Opus 5.5 caps in Copilot (200K assumed) and Cursor (300K assumed); neither vendor states one",
-    "Selection-noise similarity thresholds (TF-IDF cosine 0.45 / 0.65) are uncalibrated inference; no study validates a lexical proxy"
+    {
+      "claim": "Copilot per-model context caps and the 1M opt-in",
+      "checked": "2026-09-29"
+    },
+    {
+      "claim": "Codex CLI effective window for GPT-5.5 (400K cap, reported 258K-353K effective)",
+      "checked": "2026-09-29"
+    },
+    {
+      "claim": "Copilot CLI events.jsonl usage record shape (not a stable API)",
+      "checked": "2026-09-29"
+    },
+    {
+      "claim": "Startup-context bands (models.json baseline.fractions, 10/20/30% of the effective window) are judgment estimates seeded 2026-09-05 pending evidence",
+      "checked": "2026-09-29"
+    },
+    {
+      "claim": "CLAUDE_CODE_ENTRYPOINT=claude-vscode as the VS Code extension marker (L-008)",
+      "checked": "2026-09-29"
+    },
+    {
+      "claim": "GPT-6 Sol / Luna windows (1.05M / 922K input from secondary sources; openai.com returns 403)",
+      "checked": "2026-09-29"
+    },
+    {
+      "claim": "Opus 5.5 caps in Copilot (200K assumed) and Cursor (300K assumed); neither vendor states one",
+      "checked": "2026-09-29"
+    },
+    {
+      "claim": "Selection-noise similarity thresholds (TF-IDF cosine 0.45 / 0.65) are uncalibrated inference; no study validates a lexical proxy",
+      "checked": "2026-09-29"
+    }
   ],
   "contradiction": null,
   "events": [
@@ -40,7 +64,7 @@
     "quiet": 0,
     "pinned_min": 0,
     "pinned_max": 0,
-    "vau_quiet": 0
+    "vau_quiet": 1
   },
   "history": [
     {
@@ -72,6 +96,12 @@
       "m": 0.35,
       "interval_after": null,
       "note": "Grok 4.7 to the 500K family, Sonnet 5.5 and the sonnet alias by provider, contextburn cost U-curve noted; unittest 47 OK; cost: searches 16 · fetches 25 · tool calls 47"
+    },
+    {
+      "date": "2026-09-29",
+      "m": 0.0,
+      "interval_after": null,
+      "note": "claims re-checked by the same-day refresh (R-20260929-1 to 3, all still open or quiet); L-008 marker confirmed live: CLAUDE_CODE_ENTRYPOINT=claude-vscode"
     }
   ],
   "counts": {
