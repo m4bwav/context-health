@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
+  "version": "1.4.3",
   "last_checked": "2026-09-29",
   "_about": "Per-model context windows and degradation bands used by ctxhealth.py. Bands are research-derived ESTIMATES of a gradual gradient, not cliffs (Chroma Context Rot 2025; Anthropic 'gradient not cliff' guidance). Evidence and search plan: RESEARCH.md. Edit families/match to add a model; never hand-edit thresholds without logging a C- entry in CHANGELOG.md.",
   "profiles": {

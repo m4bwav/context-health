@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20261003-1 · 2026-10-03 · Prepared for the Claude plugin directory (v1.4.3)
+- because: user request (submission to the Claude plugin directory)
+- files: ../../README.md (Where it runs, under Install; new Privacy section), ../../.claude-plugin/plugin.json (documentationUrl, supportUrl, privacyPolicyUrl), version 1.4.3 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
+- The README now says plainly that the hooks and status line run only in Claude Code and Cowork, and its Privacy section states that everything runs locally: no network code, no credentials read, state kept in `~/.ctxhealth/`. No behaviour changed.
+
 ### C-20260929-1 · 2026-09-29 · Grok 4.7 joins the 500K family; Sonnet 5.5 and the provider-dependent `sonnet` alias noted (v1.4.2)
 - because: R-20260929-1, R-20260929-2
 - files: models.json (families grok-4.5 label, match and note; claude-1m note; checked dates; last_checked), tests/test_ctxhealth.py (test_families: grok-4.7, claude-sonnet-5-5), version 1.4.2 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json

@@ -15,6 +15,8 @@ The warning is model-aware and harness-aware. Degradation bands come from the mo
 
 ## Install
 
+Where it runs: the hooks and the status line only run in Claude Code and Cowork. Any other place a Claude plugin is installed gets the skill alone, which you ask on demand. Two limits apply even there. A plugin cannot add a status line, so the status line needs the `install` command below. Cowork has not fired hooks in testing (anthropics/claude-code issues #63360 and #47993, still open on 2026-09-29), so in Cowork the skill is the part that measures the session. Copilot CLI, Codex CLI, Gemini CLI and Cursor get their own hooks from `install`, not from the plugin.
+
 Requires Python 3.8+ (`python --version`; on Windows `py -3 --version`).
 
 ```
@@ -89,6 +91,16 @@ Entry points: [skills/context-health/SKILL.md](skills/context-health/SKILL.md) (
 Claude Code / Cowork: the last assistant line of the session's `.jsonl` carries `usage` (input + cache read + cache creation = live context) and `model`; SessionStart-on-resume passes `context_tokens` directly; the status line passes exact usage and the window. Codex: the last `token_count` event (`last_token_usage`, `model_context_window`). Copilot CLI: the last per-request usage event if the version writes one, else a size estimate of the messages since the last compaction (the file format is not a stable API). Gemini CLI, Cursor, other VS Code harnesses: a size estimate of `transcript_path`, labelled as such, plus Cursor's exact `context_tokens` on preCompact. Their own meters (`/stats`, the context ring, the chat-input meter) remain authoritative where the tool cannot read a count.
 
 Startup context: the first assistant turn's input (Claude and Cowork transcripts, Codex `token_count`, Copilot usage events) minus an estimate of the first prompt, measured once per session from the head of the transcript and appended to `~/.ctxhealth/baseline/<platform>.jsonl`; no estimate is made for formats without counts. The Claude Code CLI and the VS Code extension are told apart by `CLAUDE_CODE_ENTRYPOINT`.
+
+## Privacy
+
+Everything runs on your own machine, and nothing is sent anywhere. `ctxhealth.py` is one standard-library Python file with no network code: it makes no web requests, has no telemetry and downloads nothing.
+
+To measure a session it reads files the agents already keep on your disk. Those are session transcripts (Claude Code, Cowork, Copilot, Codex, Gemini CLI and Cursor), for the token counts and model names in them, and the skill folders those agents load, for the skill catalog check. It reads environment variables only for paths and switches: CTXHEALTH_HOME, CTXHEALTH_DEBUG, CTXHEALTH_SKILLS_HOME, COPILOT_HOME, CODEX_HOME, APPDATA, CLAUDE_CODE_ENTRYPOINT and CLAUDE_CODE_DISABLE_1M_CONTEXT. It reads no credentials, tokens or API keys.
+
+What it keeps stays in `~/.ctxhealth/`: your settings, the throttle state that stops repeat warnings, one line per session of startup-context sizes, and the inventory markdown the agent writes every 10 sessions. `install` adds hook entries to the agents' own config files (listed above) and leaves a `.bak-ctxhealth` copy of each one it rewrites; `uninstall` removes them.
+
+The hook prints one short measurement line, which the agent adds to its context. It reaches your model provider the same way the rest of the conversation does. When the skill's research refresh runs, your agent searches the web with its own tools, under that agent's privacy terms. Questions or problems go to the [issue tracker](https://github.com/m4bwav/context-health/issues).
 
 ## Versioning
 

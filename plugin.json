@@ -1,6 +1,6 @@
 {
   "name": "context-health",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Cross-agent context health: warns when a session's context is large enough to degrade the running model, and when the startup (initial) context is already too large for the model and platform. Skills-only manifest for Copilot CLI / Codex / Cursor plugin installers; run skills/context-health/ctxhealth.py install --agent all to add the hooks.",
   "author": "Mark Rogers",
   "license": "MIT",
