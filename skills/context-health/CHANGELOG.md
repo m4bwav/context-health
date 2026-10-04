@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20261004-1 · 2026-10-04 · Drop the duplicate hooks entry from the Claude manifest (v1.4.4)
+- because: the Claude directory's loader reported hooks/hooks.json twice (submission review of v1.4.3, 2026-10-04); Claude Code loads hooks/hooks.json by itself, so naming it in plugin.json registers the same hooks again
+- files: ../../.claude-plugin/plugin.json (no `hooks` key), version 1.4.4 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
+- The hooks still load from hooks/hooks.json; `claude plugin validate` passes. No behaviour changed for other hosts (the root Agent Plugins manifest is untouched apart from the version).
+
 ### C-20261003-1 · 2026-10-03 · Prepared for the Claude plugin directory (v1.4.3)
 - because: user request (submission to the Claude plugin directory)
 - files: ../../README.md (Where it runs, under Install; new Privacy section), ../../.claude-plugin/plugin.json (documentationUrl, supportUrl, privacyPolicyUrl), version 1.4.3 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
