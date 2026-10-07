@@ -1,5 +1,7 @@
 # context-health
 
+![A glass flask filling with glowing blue liquid beside a brass pressure gauge on a laboratory bench](https://raw.githubusercontent.com/m4bwav/context-health/master/.github/images/banner.jpg)
+
 Warns you when a session's context has grown big enough to degrade the model you are running, in whatever agent you happen to be in. One Python file, no dependencies, installs in under a minute, and keeps its own model research current (evergreen).
 
 What you get:
