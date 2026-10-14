@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20261014-1 · 2026-10-14 · Verify-at-use claims re-checked: Copilot 1M opt-in, Cursor's Opus 5.5 default
+- because: verify-at-use check (one search each)
+- files: evergreen.json (volatile_claims)
+- Copilot has a 1M opt-in for most current models in VS Code and the CLI (--context long_context) but publishes no per-model caps; Cursor now documents Opus 5.5 at 300K default, 1M in Max Mode; GPT-6 Sol/Luna surcharge detail added. models.json unchanged (its Copilot and Cursor assumptions still match). All eight claims stamped.
+
 ### C-20261004-1 · 2026-10-04 · Drop the duplicate hooks entry from the Claude manifest (v1.4.4)
 - because: the Claude directory's loader reported hooks/hooks.json twice (submission review of v1.4.3, 2026-10-04); Claude Code loads hooks/hooks.json by itself, so naming it in plugin.json registers the same hooks again
 - files: ../../.claude-plugin/plugin.json (no `hooks` key), version 1.4.4 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
