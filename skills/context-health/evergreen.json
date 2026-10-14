@@ -15,41 +15,41 @@
   "topic": "LLM context windows and long-context degradation (context rot, MRCR, needle benchmarks) for current Claude, GPT, Gemini and Grok models; per-harness context caps and auto-compaction thresholds; hook and transcript formats of Claude Code, Cowork, Copilot CLI, VS Code agent hooks, Codex CLI, Gemini CLI and Cursor; startup (initial) context size per model and platform: how much system prompt, tool schema and instruction-file prefix a model tolerates before performance drops, and the typical host prefix of each agent",
   "tier": "fast",
   "interval_days": 3,
-  "last_checked": "2026-09-29",
+  "last_checked": "2026-10-14",
   "next_due": null,
   "verify_at_use": true,
   "volatile_claims": [
     {
-      "claim": "Copilot per-model context caps and the 1M opt-in",
-      "checked": "2026-09-29"
+      "claim": "Copilot per-model context caps and the 1M opt-in: GitHub publishes no per-model cap numbers; a 1M opt-in exists for most current models (Claude Sonnet 4.6+, Opus 4.8/5/5.5, Haiku 5.5, Fable 5/5.1; GPT-5.3-Codex to 6.1 Sol; Kimi K3) in VS Code and Copilot CLI only (`--context long_context`) (as of 2026-10-14)",
+      "checked": "2026-10-14"
     },
     {
       "claim": "Codex CLI effective window for GPT-5.5 (400K cap, reported 258K-353K effective)",
-      "checked": "2026-09-29"
+      "checked": "2026-10-14"
     },
     {
       "claim": "Copilot CLI events.jsonl usage record shape (not a stable API)",
-      "checked": "2026-09-29"
+      "checked": "2026-10-14"
     },
     {
       "claim": "Startup-context bands (models.json baseline.fractions, 10/20/30% of the effective window) are judgment estimates seeded 2026-09-05 pending evidence",
-      "checked": "2026-09-29"
+      "checked": "2026-10-14"
     },
     {
       "claim": "CLAUDE_CODE_ENTRYPOINT=claude-vscode as the VS Code extension marker (L-008)",
-      "checked": "2026-09-29"
+      "checked": "2026-10-14"
     },
     {
-      "claim": "GPT-6 Sol / Luna windows (1.05M / 922K input from secondary sources; openai.com returns 403)",
-      "checked": "2026-09-29"
+      "claim": "GPT-6 Sol / Luna windows: 1.05M total, 922K input + 128K output; input past 272K billed at 2x input and 1.5x output (secondary sources such as LiteLLM; openai.com returns 403) (as of 2026-10-14)",
+      "checked": "2026-10-14"
     },
     {
-      "claim": "Opus 5.5 caps in Copilot (200K assumed) and Cursor (300K assumed); neither vendor states one",
-      "checked": "2026-09-29"
+      "claim": "Opus 5.5 caps: Cursor documents a 300K default with 1M in Max Mode (no surcharge); Copilot states no default (200K assumed; its 1M opt-in is listed on supported-models but pricing shows only a Default tier) (as of 2026-10-14)",
+      "checked": "2026-10-14"
     },
     {
       "claim": "Selection-noise similarity thresholds (TF-IDF cosine 0.45 / 0.65) are uncalibrated inference; no study validates a lexical proxy",
-      "checked": "2026-09-29"
+      "checked": "2026-10-14"
     }
   ],
   "contradiction": null,
@@ -64,7 +64,7 @@
     "quiet": 0,
     "pinned_min": 0,
     "pinned_max": 0,
-    "vau_quiet": 1
+    "vau_quiet": 0
   },
   "history": [
     {
@@ -102,6 +102,12 @@
       "m": 0.0,
       "interval_after": null,
       "note": "claims re-checked by the same-day refresh (R-20260929-1 to 3, all still open or quiet); L-008 marker confirmed live: CLAUDE_CODE_ENTRYPOINT=claude-vscode"
+    },
+    {
+      "date": "2026-10-14",
+      "m": 0.2,
+      "interval_after": null,
+      "note": "verify-at-use claims re-checked 2026-10-14 (one search each); changed claims rewritten"
     }
   ],
   "counts": {
