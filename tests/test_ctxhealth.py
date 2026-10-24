@@ -197,6 +197,26 @@ class TestParsers(Base):
         self.assertEqual(m["model"], "claude-opus-5")
         self.assertFalse(m["estimated"])
 
+    def test_copilot_usage_record_window_and_subagent(self):
+        # Copilot CLI 2026-10: session.usage_record carries the model and the live prompt cap; subagent
+        # records (other model, own context) come after the main agent's and must be skipped.
+        main = {"model": "Anthropic/claude-opus-5-5", "inputTokens": 125000, "cacheReadTokens": 0,
+                "initiator": "agent", "interactionType": "conversation-agent", "maxPromptTokens": 872000}
+        sub = {"model": "gpt-5.6-luna", "inputTokens": 6000, "initiator": "sub-agent",
+               "interactionType": "conversation-subagent", "maxPromptTokens": 200000}
+        p = self.path("events.jsonl")
+        write(p, [
+            {"type": "session.start", "timestamp": "t", "data": {"cwd": "/x"}},
+            {"type": "session.usage_record", "data": {"usage": main}},
+            {"type": "session.usage_record", "data": {"usage": sub}},
+        ])
+        m = ch.measure_path(p)
+        self.assertEqual((m["tokens"], m["model"], m["window_hint"]), (125000, "Anthropic/claude-opus-5-5", 872000))
+        ev = ch.evaluate(self.models, self.cfg, m["tokens"], m["model"], "copilot", p, m["window_hint"])
+        self.assertEqual((ev["family"], ev["harness_window"], ev["band_name"]), ("claude-1m", 872000, "green"))
+        f = ch.measure_first(p)
+        self.assertEqual((f["model"], f["window_hint"]), ("Anthropic/claude-opus-5-5", 872000))
+
     def test_copilot_estimate_after_compaction(self):
         p = self.path("events.jsonl")
         write(p, [

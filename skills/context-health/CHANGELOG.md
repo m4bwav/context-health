@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20261024-1 · 2026-10-24 · Copilot: read model and window from session.usage_record, skip subagent records (v1.4.5)
+- because: L-011 (user correction, second occurrence)
+- files: ctxhealth.py (parse_copilot, first_copilot, new _copilot_subagent/_copilot_window), tests/test_ctxhealth.py (test_copilot_usage_record_window_and_subagent), version 1.4.5 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
+- The Copilot parser now takes `usage.model` and `usage.maxPromptTokens` from the newest main-agent usage record and passes the cap as a reported window, so a 1M Opus 5.5 session no longer reads against the 200K default. Records with `initiator: sub-agent` are ignored for both size and model.
+
 ### C-20261014-1 · 2026-10-14 · Verify-at-use claims re-checked: Copilot 1M opt-in, Cursor's Opus 5.5 default
 - because: verify-at-use check (one search each)
 - files: evergreen.json (volatile_claims)

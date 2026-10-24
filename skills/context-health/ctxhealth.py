@@ -39,7 +39,7 @@ import sys
 import time
 import zipfile
 
-VERSION = "1.4.4"
+VERSION = "1.4.5"
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = HERE
 MODELS_PATH = os.path.join(HERE, "models.json")
@@ -409,6 +409,7 @@ def parse_copilot(path):
     lines = tail_lines(path)
     model = None
     tokens = None
+    window = None
     chars = 0
     counting = True  # becomes False at the newest compaction: earlier text is no longer in context
     for line in reversed(lines):
@@ -425,12 +426,14 @@ def parse_copilot(path):
                 model = d.get("model")
         if tokens is None and t != "session.shutdown" and "modelMetrics" not in d:
             u = d.get("usage") if isinstance(d.get("usage"), dict) else d
-            if isinstance(u, dict) and ("inputTokens" in u or "input_tokens" in u):
+            if isinstance(u, dict) and ("inputTokens" in u or "input_tokens" in u) and not _copilot_subagent(u):
                 v = int(u.get("inputTokens") or u.get("input_tokens") or 0)
                 v += int(u.get("cacheReadTokens") or u.get("cachedInputTokens") or u.get("cache_read_tokens") or 0)
                 v += int(u.get("cacheWriteTokens") or u.get("cache_write_tokens") or 0)
                 if v > 0:
                     tokens = v
+                    model = u.get("model") or model
+                    window = _copilot_window(u)
         if tokens is None and counting:
             if t in ("session.compaction_complete", "session.compaction_start"):
                 counting = False
@@ -445,7 +448,23 @@ def parse_copilot(path):
         if chars <= 0 and counting:
             return None
         return {"tokens": max(1, chars // 4), "model": model, "estimated": True, "kind": "copilot-events-estimate"}
-    return {"tokens": tokens, "model": model, "estimated": False, "kind": "copilot-events"}
+    return {"tokens": tokens, "model": model, "estimated": False, "kind": "copilot-events", "window_hint": window}
+
+
+def _copilot_subagent(u):
+    """Subagent calls (initiator sub-agent / interactionType conversation-subagent) run in their own
+    context, often on another model; counting them would report the subagent's size and window."""
+    return u.get("initiator") == "sub-agent" or "subagent" in str(u.get("interactionType") or "")
+
+
+def _copilot_window(u):
+    """session.usage_record carries the live prompt cap (maxPromptTokens, e.g. 872000 for a 1M model
+    with 128K output reserved). It reflects the user's actual window setting, so it beats any default."""
+    try:
+        v = int(u.get("maxPromptTokens") or u.get("max_prompt_tokens") or 0)
+    except (TypeError, ValueError):
+        v = 0
+    return v if v > 0 else None
 
 
 def estimate_generic(path):
@@ -709,12 +728,13 @@ def first_copilot(path):
             model = d.get("model")
         if t != "session.shutdown" and "modelMetrics" not in d:
             u = d.get("usage") if isinstance(d.get("usage"), dict) else d
-            if isinstance(u, dict) and ("inputTokens" in u or "input_tokens" in u):
+            if isinstance(u, dict) and ("inputTokens" in u or "input_tokens" in u) and not _copilot_subagent(u):
                 v = int(u.get("inputTokens") or u.get("input_tokens") or 0)
                 v += int(u.get("cacheReadTokens") or u.get("cachedInputTokens") or u.get("cache_read_tokens") or 0)
                 v += int(u.get("cacheWriteTokens") or u.get("cache_write_tokens") or 0)
                 if v > 0:
-                    return {"tokens": v, "prompt_tokens_est": 0, "model": model, "estimated": False, "kind": "copilot-events"}
+                    return {"tokens": v, "prompt_tokens_est": 0, "model": u.get("model") or model, "estimated": False,
+                            "kind": "copilot-events", "window_hint": _copilot_window(u)}
     return None
 
 

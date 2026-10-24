@@ -28,7 +28,15 @@ Write an entry the moment a real signal happens: a user correction, the same err
 - Rule: on the first session in Codex or Copilot CLI (on a machine that has them), run `ctxhealth.py doctor`; if the newest session reads as an estimate or "could not measure", run `ctxhealth.py sniff <file>`, fix the parser, run the tests, log a `C-` entry and update this learning with the confirmed shape
 - Evidence: R-20260902-5, R-20260902-6; tests/test_ctxhealth.py (TestParsers)
 - Scope: skill
-- Status: active · helpful 0 · harmful 0 · last_confirmed 2026-09-02
+- Status: active · helpful 1 · harmful 0 · last_confirmed 2026-10-24 (see L-011: the Copilot shape was confirmed live and was missing the model and window)
+
+### L-011 · 2026-10-24 · Copilot CLI's usage record carries the model and the live window; trust it over the 200K default
+- Trigger: twice in Copilot CLI with Claude Opus 5.5 at 1M (2026-10-19 and 2026-10-24) the hook reported "42% of the 200K copilot window, CAUTION, unrecognized model" while the real window was 1M; the user had to correct it both times. `session.usage_record` events carry `usage.model` ("Anthropic/claude-opus-5-5") and `usage.maxPromptTokens` (872000), but `parse_copilot` read neither, and the newest record can belong to a subagent (`initiator: sub-agent`, `interactionType: conversation-subagent`, different model, own 200K window)
+- Hypothesis: the parser was written from docs (L-003), before the usage record existed; with no model the window fell back to the copilot harness default of 200K
+- Rule: for Copilot, take model and window from the newest non-subagent `session.usage_record` (`maxPromptTokens` as `window_hint`, source "reported"); never quote a percentage that is based on an assumed window. When the hook says "unrecognized model" or "assuming 200K", check the transcript before relaying it to the user
+- Evidence: C-20261024-1; tests/test_ctxhealth.py test_copilot_usage_record_window_and_subagent; live session 10c1d89d now reads 13% of 1M (15% of the 872K prompt cap), green
+- Scope: skill
+- Status: active · helpful 0 · harmful 0 · last_confirmed 2026-10-24
 
 ### L-004 · 2026-09-02 · Claude Code hooks carry the model id only on SessionStart; read it from the transcript
 - Trigger: hook stdin schema review 2026-09-02: UserPromptSubmit, Stop and PreCompact never include `model`; SessionStart includes it only sometimes
