@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20261114-1 · 2026-11-14 · Listing-budget check honours SLASH_COMMAND_TOOL_CHAR_BUDGET (v1.4.6)
+- because: user request (catalog cleanup; warn before skills get dropped)
+- files: ctxhealth.py (new listing_budget, describe_selection, selection hook, cmd_status), version 1.4.6 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
+- The budget was always 1% of the window, so a raised SLASH_COMMAND_TOOL_CHAR_BUDGET (env or the env block of ~/.claude/settings.json) still produced an overflow warning, and a lowered one hid a real overflow. It is now read in characters (~4 per token) and used when set.
+
 ### C-20261024-1 · 2026-10-24 · Copilot: read model and window from session.usage_record, skip subagent records (v1.4.5)
 - because: L-011 (user correction, second occurrence)
 - files: ctxhealth.py (parse_copilot, first_copilot, new _copilot_subagent/_copilot_window), tests/test_ctxhealth.py (test_copilot_usage_record_window_and_subagent), version 1.4.5 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
