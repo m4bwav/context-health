@@ -39,7 +39,7 @@ import sys
 import time
 import zipfile
 
-VERSION = "1.4.5"
+VERSION = "1.4.6"
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = HERE
 MODELS_PATH = os.path.join(HERE, "models.json")
@@ -1194,6 +1194,24 @@ def selection_band_text(models, name):
     return bt or {"label": name.upper(), "effects": "", "advice": ""}
 
 
+def listing_budget(models, window):
+    """Claude Code's skill-listing budget in tokens. SLASH_COMMAND_TOOL_CHAR_BUDGET (env, or the env block of
+    ~/.claude/settings.json) sets it in characters (~4 per token); otherwise 1% of the window."""
+    raw = os.environ.get("SLASH_COMMAND_TOOL_CHAR_BUDGET")
+    if not raw:
+        try:
+            with open(os.path.join(os.path.expanduser("~"), ".claude", "settings.json"), encoding="utf-8") as f:
+                raw = (json.load(f).get("env") or {}).get("SLASH_COMMAND_TOOL_CHAR_BUDGET")
+        except Exception:
+            raw = None
+    try:
+        if raw and int(raw) > 0:
+            return int(raw) / 4.0
+    except (TypeError, ValueError):
+        pass
+    return (window or 0) * (((models.get("selection") or {}).get("listing_budget_fraction")) or 0.01)
+
+
 def describe_selection(models, cfg, ev, budget_tokens=None):
     bt = selection_band_text(models, ev["band_name"])
     th = ev["thresholds"]
@@ -1216,7 +1234,7 @@ def describe_selection(models, cfg, ev, budget_tokens=None):
         lines.append("descriptions over the %d-char listing cap (truncated in the catalog): %s" % (
             int((models.get("selection") or {}).get("desc_chars_max") or 1536), ", ".join(ev["over_cap"][:5])))
     if budget_tokens and ev["catalog_tokens"] > budget_tokens:
-        lines.append("catalog ~%s exceeds Claude Code's listing budget ~%s (skillListingBudgetFraction %.2f): "
+        lines.append("catalog ~%s exceeds Claude Code's listing budget ~%s (1%% of the window, %.2f, unless SLASH_COMMAND_TOOL_CHAR_BUDGET is set): "
                      "least-invoked descriptions are dropped whole and cannot be selected." % (
                          k(ev["catalog_tokens"]), k(int(budget_tokens)), ev["listing_budget_fraction"] or 0.01))
     if bt.get("advice"):
@@ -1299,7 +1317,7 @@ def selection_step(models, cfg, agent, session_id, data, harness_window=None):
         short.append("name clash: %s" % ", ".join(ev["clashes"][:3]))
     if ev["over_cap"]:
         parts.append("Descriptions Claude Code truncates at 1,536 characters: %s." % ", ".join(ev["over_cap"][:4]))
-    budget = (harness_window or 0) * ((models.get("selection") or {}).get("listing_budget_fraction") or 0.01)
+    budget = listing_budget(models, harness_window)
     if budget and ev["catalog_tokens"] > budget:
         parts.append("The catalog is over Claude Code's listing budget (~%s): least-invoked descriptions are dropped." % k(int(budget)))
     if ev["band"] >= 2 and bt.get("advice"):
@@ -1632,7 +1650,7 @@ def cmd_status(a):
         print(describe(models, m, ev, agent))
         print("\n".join(describe_baseline(models, cfg, first, path, agent, ev["harness"], a.model)))
         sev = evaluate_selection(models, cfg, os.getcwd(), agent=agent)
-        budget = (ev.get("harness_window") or 0) * (((models.get("selection") or {}).get("listing_budget_fraction")) or 0.01)
+        budget = listing_budget(models, ev.get("harness_window"))
         print("\n".join(describe_selection(models, cfg, sev, budget)))
     return 0
 
