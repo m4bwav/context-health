@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20261114-2 · 2026-11-14 · Description shortened to 759 chars (v1.4.7)
+- because: user request (Agent Skills spec limit of 1,024 chars; it was 1,015 by one count and over by others)
+- files: SKILL.md (description), version 1.4.7 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
+- Every trigger phrase kept; the harness list is shorter in wording only.
+
 ### C-20261114-1 · 2026-11-14 · Listing-budget check honours SLASH_COMMAND_TOOL_CHAR_BUDGET (v1.4.6)
 - because: user request (catalog cleanup; warn before skills get dropped)
 - files: ctxhealth.py (new listing_budget, describe_selection, selection hook, cmd_status), version 1.4.6 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
