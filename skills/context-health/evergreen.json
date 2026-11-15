@@ -8,7 +8,8 @@
     "changelog": "CHANGELOG.md",
     "learnings": "LEARNINGS.md",
     "data": "models.json",
-    "code": "ctxhealth.py"
+    "code": "ctxhealth.py",
+    "tests": "TESTS.md"
   },
   "protocol": "MAINTENANCE.md",
   "source": null,
@@ -119,8 +120,20 @@
   "counts": {
     "learnings": 10,
     "changes": 8,
-    "research": 14
+    "research": 14,
+    "tests": 1
   },
   "consolidate_every": 25,
-  "version": "1.4.7"
+  "version": "1.4.8",
+  "tests": {
+    "last_run": "2026-11-15T13:51",
+    "harness": "claude -p",
+    "env": "windows",
+    "cases": 8,
+    "passed": 8,
+    "failed": 0,
+    "failing": [],
+    "last_failure": null,
+    "research_after_days": null
+  }
 }

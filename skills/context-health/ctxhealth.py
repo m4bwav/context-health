@@ -39,7 +39,7 @@ import sys
 import time
 import zipfile
 
-VERSION = "1.4.7"
+VERSION = "1.4.8"
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = HERE
 MODELS_PATH = os.path.join(HERE, "models.json")

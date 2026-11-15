@@ -1,0 +1,97 @@
+{
+  "skill": "context-health",
+  "_format": "skill-creator evals.json plus evergreen fields (kind, decoy, evidence, baseline, reference, holdout); extra fields are ignored by skill-creator's runner. reference: what a correct reply says, for the judge to compare against. holdout: true keeps a value case out of evergreen-tune's sight (mark one once there are three or more). Rules: protocol/TESTING.md.",
+  "evals": [
+    {
+      "id": "trigger-1",
+      "kind": "trigger",
+      "prompt": "how big is this session right now? are we near the limit?",
+      "expectations": [
+        "the context-health skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "trigger-2",
+      "kind": "trigger",
+      "prompt": "you seem to be getting sloppier, should I start a new session?",
+      "expectations": [
+        "the context-health skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "trigger-3",
+      "kind": "trigger",
+      "prompt": "is my system prompt too big for this model? how big is my starting context?",
+      "expectations": [
+        "the context-health skill is invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-1",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "shorten the description in my foo skill's SKILL.md, it is too long",
+      "expectations": [
+        "the context-health skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "decoy-2",
+      "kind": "trigger",
+      "decoy": true,
+      "prompt": "in one paragraph, what is a context window in an LLM?",
+      "expectations": [
+        "the context-health skill is not invoked"
+      ],
+      "runs": 3
+    },
+    {
+      "id": "action-1",
+      "kind": "action",
+      "prompt": "context check please",
+      "expectations": [
+        "ctxhealth.py status ran, proven by the trace, not by the reply"
+      ],
+      "evidence": {
+        "type": "trace",
+        "tool": "Bash|PowerShell",
+        "input_match": "ctxhealth\\.py[\"']?\\s+status"
+      },
+      "baseline": "2026-11-15 claude -p sonnet with --disable-slash-commands: fail (no ctxhealth.py call; answered without measuring)",
+      "runs": 3
+    },
+    {
+      "id": "action-2",
+      "kind": "action",
+      "prompt": "do my installed skills overlap with each other?",
+      "expectations": [
+        "ctxhealth.py selection ran, proven by the trace"
+      ],
+      "evidence": {
+        "type": "trace",
+        "tool": "Bash|PowerShell",
+        "input_match": "ctxhealth\\.py[\"']?\\s+selection"
+      },
+      "baseline": "2026-11-15 claude -p sonnet with --disable-slash-commands: fail (no ctxhealth.py call; answered without measuring)",
+      "runs": 3
+    },
+    {
+      "id": "outcome-1",
+      "kind": "outcome",
+      "holdout": true,
+      "prompt": "how big was my startup context in this session, in tokens?",
+      "files": [],
+      "expectations": [
+        "the trace shows ctxhealth.py baseline or status",
+        "the reply states a token count matching \\d+(\\.\\d+)?\\s?K"
+      ],
+      "reference": "A measured startup size in thousands of tokens with its band (GREEN/NOTABLE/HIGH/EXCESSIVE) for the model, not a guess.",
+      "runs": 3,
+      "baseline": "2026-11-15 claude -p sonnet with --disable-slash-commands: fail (no ctxhealth.py call; answered without measuring)"
+    }
+  ]
+}

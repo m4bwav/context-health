@@ -4,6 +4,11 @@ Every change to [SKILL.md](SKILL.md), `models.json`, `ctxhealth.py` and the comp
 
 Entry shape: `### C-YYYYMMDD-n · date · one-line summary`, then `because:` (IDs or "user request"), `files:` (file and section), and a sentence on what changed. Cite section headings, not line numbers. Bump the plugin version when a packaged file changes.
 
+### C-20261115-1 · 2026-11-15 · First eval suite (v1.4.8)
+- because: user request (the unit had no TESTS.md or evals since C-20260917-1)
+- files: evals/evals.json (new: 3 triggers, 2 decoys, 2 action cases with trace evidence, 1 held-out outcome case), TESTS.md (new, first run T-20261115-1), evergreen.json (tests block), version 1.4.8 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
+- The description was already under 1,024 characters (759, C-20261114-2); no description change.
+
 ### C-20261114-2 · 2026-11-14 · Description shortened to 759 chars (v1.4.7)
 - because: user request (Agent Skills spec limit of 1,024 chars; it was 1,015 by one count and over by others)
 - files: SKILL.md (description), version 1.4.7 in plugin.json, .claude-plugin/plugin.json, ctxhealth.py, SKILL.md, models.json, evergreen.json
