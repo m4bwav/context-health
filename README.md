@@ -17,7 +17,7 @@ The warning is model-aware and harness-aware. Degradation bands come from the mo
 
 ## Install
 
-Where it runs: the hooks and the status line only run in Claude Code and Cowork. Any other place a Claude plugin is installed gets the skill alone, which you ask on demand. Two limits apply even there. A plugin cannot add a status line, so the status line needs the `install` command below. Cowork has not fired hooks in testing (anthropics/claude-code issues #63360 and #47993, still open on 2026-09-29), so in Cowork the skill is the part that measures the session. Copilot CLI, Codex CLI, Gemini CLI and Cursor get their own hooks from `install`, not from the plugin.
+Where it runs: the hooks and the status line only run in Claude Code and Cowork. Any other place the plugin is installed gets the skill alone, which you ask on demand. Two limits apply even there. A plugin cannot add a status line, so the status line needs the `install` command below. Cowork has not fired hooks in testing (anthropics/claude-code issues #63360 and #47993, still open on 2026-09-29), so in Cowork the skill is the part that measures the session. Copilot CLI, Codex CLI, Gemini CLI and Cursor get their own hooks from `install`, not from the plugin.
 
 Requires Python 3.8+ (`python --version`; on Windows `py -3 --version`).
 
